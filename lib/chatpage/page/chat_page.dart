@@ -1,28 +1,37 @@
+import 'package:arbichat/chatpage/model/minimal_message.dart';
+import 'package:arbichat/on_chain/widget/encrypt.dart';
+import 'package:arbichat/on_chain/widget/onchain_functions.dart';
+import 'package:arbichat/on_chain/widget/pinata_ipfs.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:w3aflutter/chatpage/model/chat_model.dart';
-import 'package:w3aflutter/chatpage/model/message_model.dart';
-import 'package:w3aflutter/chatpage/widgets/chat_widget.dart';
-import 'package:w3aflutter/chatpage/widgets/search_bar.dart';
-import 'package:w3aflutter/profilepage/page/profile_page.dart';
+import 'package:arbichat/chatpage/model/chat_model.dart';
+import 'package:arbichat/chatpage/model/message_model.dart';
+import 'package:arbichat/chatpage/widgets/chat_widget.dart';
+import 'package:arbichat/chatpage/widgets/search_bar.dart';
+import 'package:arbichat/profilepage/page/profile_page.dart';
 import 'message_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:web3dart/web3dart.dart' as web3dart;
 
 class ChatsPage extends StatefulWidget {
-  ChatsPage({super.key});
+  const ChatsPage({super.key});
 
   @override
   State<ChatsPage> createState() => _ChatsPageState();
 }
 
 class _ChatsPageState extends State<ChatsPage> {
+
   final FocusNode _searchFocusNode = FocusNode();
-  List<Chat> chats = []; // Initialize an empty list of chats
+  List<ChatTiles> chats = []; // Initialize an empty list of chats
   bool loading = true;
+  late OnchainFunctions onchainFunctions;
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  String? currentWalletAddress;
+  String? userWalletAddress;
+  var ipfsService = IpfsService(
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaWQiOiI2MjFhY2UwOS1mMGNiLTQzMjYtYTZkNS0zYjljNmYwZDdmYTAiLCJlbWFpbCI6ImNvZGVkbWF0cml4bG9sQGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJwaW5fcG9saWN5Ijp7InJlZ2lvbnMiOlt7ImRlc2lyZWRSZXBsaWNhdGlvbkNvdW50IjoxLCJpZCI6IkZSQTEifSx7ImRlc2lyZWRSZXBsaWNhdGlvbkNvdW50IjoxLCJpZCI6Ik5ZQzEifV0sInZlcnNpb24iOjF9LCJtZmFfZW5hYmxlZCI6ZmFsc2UsInN0YXR1cyI6IkFDVElWRSJ9LCJhdXRoZW50aWNhdGlvblR5cGUiOiJzY29wZWRLZXkiLCJzY29wZWRLZXlLZXkiOiI2YzVhMTMwOTZhNTc5YWY0MzJlYyIsInNjb3BlZEtleVNlY3JldCI6ImQ0NTllNTI2NWI1OWQ0NmI3MDEwNjQzYmJlNmM2MjBjODMzNjZiNGU0NWFjMTkyNGE4NDczZmQ1OGNjMTQxODYiLCJleHAiOjE3ODAyODY2NTh9.QiFDw0xZSgr2BCqZgPNYmAAKAMt5RP9nJgJPqvCaoA4'
+  );
 
   @override
   void initState() {
@@ -38,91 +47,77 @@ class _ChatsPageState extends State<ChatsPage> {
   }
 
   void _loadChats() async {
-    print("Loading chats...");
+  print("Loading on-chain chats...");
   final prefs = await SharedPreferences.getInstance();
   final privateKey = prefs.getString('privateKey');
-  print("Private key retrieved: $privateKey");
 
-
-  if (privateKey != null) {
-    final credentials = web3dart.EthPrivateKey.fromHex(privateKey);
-    currentWalletAddress = credentials.address.hexEip55;
-    print("Current wallet address: $currentWalletAddress");
-
-    List<Chat> tempChats = []; // Temporary list for batch updates
-
-    final querySnapshot = await _firestore
-        .collection('users')
-        .doc(currentWalletAddress)
-        .collection('messages')
-        .get();
-
-      print("Query snapshot retrieved: ${querySnapshot.docs.length} documents");
-
-
-    if (querySnapshot.docs.isEmpty) {
-      setState(() {
-        loading = false;
-      });
-      print("No chat documents found.");
-      return;
-    }
-
-    for (var doc in querySnapshot.docs) {
-      String otherWalletAddress = doc.id;
-      print("Processing chat with: $otherWalletAddress");
-
-      final userProfileSnapshot = await _firestore
-        .collection('users')
-        .doc(otherWalletAddress)
-        .get();
-
-      if (!userProfileSnapshot.exists) {
-        print("User profile not found for: $otherWalletAddress");
-        continue;
-      }
-
-      final userProfileData = userProfileSnapshot.data()!;
-      print("User profile data for $otherWalletAddress: $userProfileData");
-      var userProfile = UserProfile.fromMap(userProfileData);
-
-      String avatarUrl = userProfileData['avatarUrl'] ?? 'assets/profileplaceholder.png';
-
-      final messagesSnapshot = await _firestore
-          .collection('users')
-          .doc(currentWalletAddress)
-          .collection('messages')
-          .doc(otherWalletAddress)
-          .collection('chat')
-          .orderBy('timestamp', descending: true)
-          .limit(1)
-          .get();
-          print("Messages snapshot retrieved for $otherWalletAddress: ${messagesSnapshot.docs.length} messages");
-
-      if (messagesSnapshot.docs.isNotEmpty) {
-        final lastMessage = Message.fromFirestore(messagesSnapshot.docs.first);
-        print("Last message content: ${lastMessage.messageContent}");
-
-        tempChats.add(Chat(
-          userProfile: userProfile,
-          message: lastMessage,
-          avatarUrl: avatarUrl,
-          isUnread: !lastMessage.isRead && !lastMessage.isSentByUser,
-          isRead: lastMessage.isRead,
-          unreadCount: lastMessage.isRead ? 0 : 1,
-        ));
-      }
-    }
-
-    setState(() {
-      chats = tempChats;
-      loading = false;
-    });
+  if (privateKey == null) {
+    print("Private key not found.");
+    return;
   }
+
+  final credentials = web3dart.EthPrivateKey.fromHex(privateKey);
+  userWalletAddress = credentials.address.hexEip55;
+  print("Current wallet address: $userWalletAddress");
+
+  List<ChatTiles> tempChats = [];
+
+  final firebaseUsers = await _firestore.collection('users').get();
+  print("Fetched ${firebaseUsers.docs.length} Firebase users");
+
+  for (var doc in firebaseUsers.docs) {
+    String otherWalletAddress = doc.id;
+
+    if (otherWalletAddress == userWalletAddress) continue;
+
+    print("Checking messages between $userWalletAddress and $otherWalletAddress");
+
+    // Fetch on-chain messages
+    final messages = await onchainFunctions.fetchMessages(web3dart.EthereumAddress(web3dart.EthereumAddress.fromHex(otherWalletAddress).addressBytes));
+    final relevantMessages = messages.where((msg) =>
+      msg.sender == userWalletAddress || msg.receiver == userWalletAddress
+    ).toList();
+
+    if (relevantMessages.isEmpty) continue;
+
+    relevantMessages.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+    final lastMessage = relevantMessages.first;
+
+    // Decrypt message from IPFS
+    final encryptedContent = await ipfsService.fetchFromIPFS(lastMessage.cid);
+    final decryptedMessage = SimpleEncryptor.decrypt(encryptedContent);
+
+    // Get profile info (avatar etc.)
+    final userProfileSnapshot = await _firestore.collection('users').doc(otherWalletAddress).get();
+    String avatarUrl = 'assets/profileplaceholder.png';
+    UserProfile userProfile;
+
+    if (userProfileSnapshot.exists) {
+      final userData = userProfileSnapshot.data()!;
+      avatarUrl = userData['avatarUrl'] ?? avatarUrl;
+      userProfile = UserProfile.fromMap(userData);
+    } else {
+      userProfile = UserProfile(walletAddress: otherWalletAddress, name: otherWalletAddress, interactionScore: 0, walletBalance: 0.0);
+    }
+
+    final message = Message(senderAddress: otherWalletAddress, messageContent: decryptedMessage, timestamp: DateTime.fromMillisecondsSinceEpoch(lastMessage.timestamp.toInt() * 1000), isSentByUser: (lastMessage.sender.toString() == userWalletAddress) ? true : false);
+
+    tempChats.add(ChatTiles(
+      userProfile: userProfile,
+      message: message,
+      avatarUrl: avatarUrl,
+      timestamp: DateTime.fromMillisecondsSinceEpoch(lastMessage.timestamp.toInt() * 1000),
+      isSentByUser: (lastMessage.sender.toString() == userWalletAddress) ? true : false,
+    ));
+  }
+
+  setState(() {
+    chats = tempChats;
+    loading = false;
+  });
 }
 
-
-  void addNewChat(UserProfile userProfile, Message message) async {
+  void addNewChat(UserProfile userProfile, ChatMessage message) async {
     // Check if a chat with the given userProfile already exists
     bool chatExists = chats.any(
         (chat) => chat.userProfile.walletAddress == userProfile.walletAddress);
@@ -137,50 +132,48 @@ class _ChatsPageState extends State<ChatsPage> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => MessagingPage(
-            userProfile: chats[chatIndex].userProfile,
+          builder: (context) => MessageTestPage(
+              userProfile: chats[chatIndex].userProfile,
           ),
         ),
       );
     } else {
-
-      final userProfileSnapshot = await _firestore
+    // Try to fetch avatar from Firestore as fallback
+    String avatarUrl = 'assets/profileplaceholder.png'; // default
+    final userProfileSnapshot = await _firestore
         .collection('users')
         .doc(userProfile.walletAddress)
         .get();
 
-    String avatarUrl = 'assets/profileplaceholder.png'; // Default avatar URL
-
     if (userProfileSnapshot.exists) {
-      final userProfileData = userProfileSnapshot.data();
-      // Check if avatarUrl exists in userProfile data, otherwise use placeholder
-      avatarUrl = userProfileData?['avatarUrl'] ?? avatarUrl;
+      final data = userProfileSnapshot.data();
+      avatarUrl = data?['avatarUrl'] ?? avatarUrl;
     }
-
-      // If the chat doesn't exist, add a new chat to the list
-      setState(() {
-        chats.add(Chat(
-          userProfile: userProfile,
-          message: message,
-          avatarUrl:
-              'assets/profileplaceholder.png',
-          isUnread: true, // Set to true for the new chat
-          isRead: false,
-          unreadCount: 1, // You can adjust this logic as needed
-        ));
-      });
-
-      // After adding the new chat, navigate to the new chat page
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => MessagingPage(
-            userProfile: userProfile,
-          ),
-        ),
+    
+    // Create a ChatTiles (or Chat, depending)
+    final chatTile = ChatTiles(
+      message: message,
+      userProfile: userProfile,
+      avatarUrl: avatarUrl,
+      timestamp: DateTime.fromMillisecondsSinceEpoch(lastMessage.timestamp.toInt() * 1000),
+      isSentByUser: (lastMessage.sender.toString() == userWalletAddress) ? true : false,
       );
-    }
+    
+
+    setState(() {
+      chats.add(chatTile);
+    });
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => MessagingPage(
+          userProfile: userProfile,
+        ),
+      ),
+    );
   }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -196,13 +189,13 @@ class _ChatsPageState extends State<ChatsPage> {
           IconButton(
               onPressed: () {
                 Navigator.push(context,
-                    MaterialPageRoute(builder: (context) => ProfilePage()));
+                    MaterialPageRoute(builder: (context) => const ProfilePage()));
               },
-              icon: Icon(Icons.person))
+              icon: const Icon(Icons.person))
         ],
       ),
       body: Container(
-        padding: EdgeInsets.all(20),
+        padding: const EdgeInsets.all(20),
         child: GestureDetector(
           onTap: () {
             FocusScope.of(context).unfocus();
@@ -217,7 +210,7 @@ class _ChatsPageState extends State<ChatsPage> {
               const Divider(),
               Expanded(
                 child: loading
-                    ? Center(
+                    ? const Center(
                         child: CircularProgressIndicator(),
                       )
                     : ListView.builder(
@@ -229,8 +222,7 @@ class _ChatsPageState extends State<ChatsPage> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => MessagingPage(
-                                    userProfile: chats[index].userProfile,
+                                  builder: (context) => MessageTestPage(
                                   ),
                                 ),
                               );

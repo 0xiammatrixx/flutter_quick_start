@@ -1,27 +1,23 @@
-import 'package:w3aflutter/chatpage/model/message_model.dart';
+import 'package:arbichat/chatpage/model/message_model.dart';
 
-class Chat {
+class ChatTiles {
   final UserProfile userProfile;
-  final Message message;
+  final ChatMessage message;
   final String avatarUrl;
-  final bool isUnread;
-  final bool isRead;
-  final int unreadCount;
-  
+  final DateTime timestamp;
+  final bool isSentByUser;
 
-  Chat({
+  ChatTiles({
     required this.userProfile,
     required this.message,
     required this.avatarUrl,
-    required this.isUnread,
-    required this.isRead,
-    required this.unreadCount,
+    required this.timestamp,
+    required this.isSentByUser,
   });
 
   Map<String, dynamic> toMap(){
     return {
       'userProfile': userProfile,
-
     };
   }
 }

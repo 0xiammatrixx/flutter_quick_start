@@ -1,5 +1,6 @@
+import 'package:arbichat/chatpage/page/message_page.dart';
 import 'package:flutter/material.dart';
-import 'package:w3aflutter/profilepage/model/profile_model.dart';
+import 'package:arbichat/profilepage/model/profile_model.dart';
 
 class ProfileWidget extends StatelessWidget {
   final Profile profile;
@@ -34,7 +35,7 @@ class ProfileWidget extends StatelessWidget {
                     ))
             ]),
           ),
-          SizedBox(
+          const SizedBox(
             height: 10,
           ),
           Row(
@@ -42,13 +43,13 @@ class ProfileWidget extends StatelessWidget {
             children: [
               Text(
                 profile.name,
-                style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
+                style: const TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
               ),
-              SizedBox(
+              const SizedBox(
                 width: 5,
               ),
               if (profile.isOnline)
-                Icon(
+                const Icon(
                   Icons.circle,
                   size: 13,
                   color: Colors.blue,
@@ -60,7 +61,7 @@ class ProfileWidget extends StatelessWidget {
             width: screenWidth * 0.35,
             child: ElevatedButton(
               onPressed: () {},
-              child: Row(
+              child: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
@@ -75,58 +76,60 @@ class ProfileWidget extends StatelessWidget {
               ),
             ),
           ),
-          Divider(),
+          const Divider(),
           Card(
             child: ListTile(
-              leading: Icon(Icons.mail_outline_rounded),
-              title: Text('Email address'),
+              leading: const Icon(Icons.mail_outline_rounded),
+              title: const Text('Email address'),
               subtitle: Text(
                 profile.emailAddress,
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
               ),
             ),
           ),
           Card(
             child: ListTile(
-              leading: Icon(Icons.phone_enabled_outlined),
-              title: Text('Wallet Address'),
+              leading: const Icon(Icons.phone_enabled_outlined),
+              title: const Text('Wallet Address'),
               subtitle: Text(
                 profile.walletAddress,
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
               ),
             ),
           ),
           profile.location != null
               ? Card(
                   child: ListTile(
-                    leading: Icon(Icons.location_on_outlined),
-                    title: Text('Location'),
+                    leading: const Icon(Icons.location_on_outlined),
+                    title: const Text('Location'),
                     subtitle: Text(
                       profile.location!,
                       style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+                          const TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
                     ),
                   ),
                 )
-              : Card(
+              : const Card(
                   child: ListTile(
                     leading: Icon(Icons.location_on_outlined),
                     title: Text('No Location Set'),
                   ),
                 ),
-          SizedBox(
+          const SizedBox(
             height: 20,
           ),
           Card(
             child: ListTile(
-              leading: Icon(Icons.share),
-              title: Text(
+              leading: const Icon(Icons.share),
+              title: const Text(
                 'Share your profile',
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
-              subtitle: Text('Invite your friends and family here'),
-              trailing: Icon(Icons.file_upload_outlined),
-              onTap: () {},
+              subtitle: const Text('Invite your friends and family here'),
+              trailing: const Icon(Icons.file_upload_outlined),
+              onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) => MessageTestPage()));
+              },
             ),
           )
         ],

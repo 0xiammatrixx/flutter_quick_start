@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:w3aflutter/chatpage/model/chat_model.dart';
+import 'package:arbichat/chatpage/model/chat_model.dart';
 
 class ChatTile extends StatelessWidget {
-  final Chat chat;
+  final ChatTiles chat;
   final VoidCallback? onTap;
 
-  ChatTile({
+  const ChatTile({
     super.key,
     required this.chat,
     this.onTap,
@@ -22,19 +22,22 @@ class ChatTile extends StatelessWidget {
         chat.userProfile.name != 'Unknown Name'
             ? chat.userProfile.name
             : chat.userProfile.walletAddress,
-        style: TextStyle(fontWeight: FontWeight.bold),
+        style: const TextStyle(fontWeight: FontWeight.bold),
       ),
       subtitle: Text(
-        chat.message.messageContent, // Directly use message data from the chat
+        chat.message.plaintext ?? '[Encrypted]', // Directly use message data from the chat
         overflow: TextOverflow.ellipsis,
         maxLines: 1,
         style: TextStyle(
-          fontWeight: !chat.message.isSentByUser && chat.message.isRead
-              ? FontWeight.bold
-              : FontWeight.normal,
+          fontWeight: chat.isSentByUser
+              ? FontWeight.normal
+              : FontWeight.bold,
         ),
       ),
-      trailing: Text(DateFormat('HH:mm').format(chat.message.timestamp)),
+      trailing: Text(DateFormat('HH:mm').format(
+  DateTime.fromMillisecondsSinceEpoch(chat.message.timestamp.toInt() * 1000),
+)
+),
       onTap: onTap,
     );
   }

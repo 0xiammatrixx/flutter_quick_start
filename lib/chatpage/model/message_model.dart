@@ -1,5 +1,4 @@
-// models/user_model.dart
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:web3dart/web3dart.dart';
 
 class UserProfile {
   final String walletAddress;
@@ -36,52 +35,30 @@ class UserProfile {
 }
 
 
+class ChatMessage {
+  final EthereumAddress sender;
+  final EthereumAddress receiver;
+  final String cid;
+  final BigInt timestamp;
+  final bool deleted;
+  final String? plaintext; 
 
-
-class Message {
-  final String senderAddress;
-  final String messageContent;
-  final DateTime timestamp;
-  final bool isSentByUser;
-  final bool isRead;
-
-  Message({
-    required this.senderAddress,
-    required this.messageContent,
+  ChatMessage({
+    required this.sender,
+    required this.receiver,
+    required this.cid,
     required this.timestamp,
-    required this.isSentByUser,
-    required this.isRead,
+    required this.deleted,
+    this.plaintext,
   });
 
-   // Method to convert Firestore document to Message object
-  factory Message.fromFirestore(DocumentSnapshot doc) {
-    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-    return Message(
-      senderAddress: data['senderAddress'] ?? '',
-      messageContent: data['messageContent'] ?? '',
-      timestamp: (data['timestamp'] as Timestamp).toDate(),
-      isSentByUser: data['isSentByUser'] ?? false,
-      isRead: data['isRead'] ?? false,
+  factory ChatMessage.fromMap(Map<String, dynamic> map) {
+    return ChatMessage(
+      sender: EthereumAddress.fromHex(map['sender']),
+      receiver: EthereumAddress.fromHex(map['receiver']),
+      cid: map['cid'],
+      timestamp: BigInt.parse(map['timestamp'].toString()),
+      deleted: map['deleted'],
     );
   }
-
-  // Method to convert Message object to Firestore document
-  Map<String, dynamic> toFirestore() {
-    return {
-      'senderAddress': senderAddress,
-      'messageContent': messageContent,
-      'timestamp': Timestamp.fromDate(timestamp),
-      'isSentByUser': isSentByUser,
-    };
-  }
-
-  Map<String, dynamic> toMap() {
-    return {
-      'senderAddress': senderAddress,
-      'messageContent': messageContent,
-      'timestamp': timestamp,
-      'isSentByUser': isSentByUser,
-    };
-  }
 }
-

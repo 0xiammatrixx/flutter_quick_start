@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:w3aflutter/profilepage/model/profile_model.dart';
-import 'package:w3aflutter/profilepage/widget/profile_widget.dart';
+import 'package:arbichat/profilepage/model/profile_model.dart';
+import 'package:arbichat/profilepage/widget/profile_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:web3dart/web3dart.dart';
 import 'dart:developer';
@@ -66,29 +66,29 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
+        title: const Text(
           'Profile',
           style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
         ),
         actions: <Widget>[
-          IconButton(onPressed: () {}, icon: Icon(Icons.qr_code_2)),
+          IconButton(onPressed: () {}, icon: const Icon(Icons.qr_code_2)),
         ],
       ),
       body: FutureBuilder<Profile>(
         future: _profileFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           } else if (snapshot.hasData) {
             final profile = snapshot.data!;
             return Padding(
-              padding: EdgeInsets.all(20),
+              padding: const EdgeInsets.all(20),
               child: ProfileWidget(profile: profile),
             );
           } else {
-            return Center(child: Text('No data found'));
+            return const Center(child: Text('No data found'));
           }
         },
       ),

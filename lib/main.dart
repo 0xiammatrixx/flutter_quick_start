@@ -5,8 +5,10 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:w3aflutter/chatpage/transaction/get_balance.dart';
-import 'package:w3aflutter/firebase_options.dart';
+import 'package:percent_indicator/circular_percent_indicator.dart';
+import 'package:arbichat/chatpage/transaction/get_balance.dart';
+import 'package:arbichat/firebase_options.dart';
+import 'package:arbichat/profilepage/page/profile_page.dart';
 import 'package:web3auth_flutter/enums.dart';
 import 'package:web3auth_flutter/input.dart';
 import 'package:web3auth_flutter/output.dart';
@@ -16,7 +18,7 @@ import 'package:http/http.dart';
 import 'package:web3dart/web3dart.dart' as web3dart;
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:w3aflutter/chatpage/page/chat_page.dart';
+import 'package:arbichat/chatpage/page/chat_page.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -81,8 +83,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       network: Network.sapphire_mainnet,
       redirectUrl: redirectUrl,
       buildEnv: BuildEnv.production,
-      // 259200 allows user to stay authenticated for 3 days with Web3Auth.
-      // Default is 86400, which is 1 day.
+      // 259200 to stay authenticated for 3 days.
       sessionTime: 259200,
     ));
     try {
@@ -101,22 +102,56 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    var bgcol = const Color.fromARGB(255, 235, 235, 235).withOpacity(1);
+    var textcol = const Color.fromARGB(255, 17, 24, 39);
+    double screenWidth = MediaQuery.of(context).size.width;
+    double screenHeight = MediaQuery.of(context).size.height;
     return MaterialApp(
       navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
       home: Scaffold(
-        appBar: AppBar(
-          centerTitle: true,
-          title: const Text(
-            'Welcome to ArbiChat',
-            style: TextStyle(
-                fontStyle: FontStyle.italic, fontWeight: FontWeight.bold),
-          ),
-        ),
+        appBar: logoutVisible
+            ? AppBar(
+                leading: Padding(
+                  padding: const EdgeInsets.all(5.0),
+                  child: Container(
+                    height: 10,
+                    width: 15,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Image.asset(
+                      'assets/ArbiChat_logo.png',
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
+                elevation: 0,
+                title: Text(
+                  'Dashboard',
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 25,
+                      color: textcol),
+                ),
+                actions: <Widget>[
+                  IconButton(
+                      padding: EdgeInsets.only(right: screenWidth * 0.05),
+                      onPressed: () {
+                        navigatorKey.currentState?.push(MaterialPageRoute(
+                            builder: (context) => const ProfilePage()));
+                      },
+                      icon: const Icon(Icons.person))
+                ],
+                backgroundColor: Colors.white,
+              )
+            : AppBar(
+                backgroundColor: bgcol,
+              ),
+        backgroundColor: bgcol,
         body: SingleChildScrollView(
-          child: Center(
-              child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               const Padding(
                 padding: EdgeInsets.all(8.0),
@@ -125,51 +160,72 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
                 visible: !logoutVisible,
                 child: Column(
                   children: [
-                    const Icon(
-                      Icons.flutter_dash,
-                      size: 80,
-                      color: Color(0xFF1389fd),
+                    Center(
+                      child: Container(
+                          height: screenHeight * 0.08,
+                          width: screenWidth * 0.6,
+                          child: Image.asset('assets/ArbiChat_logo.png')),
                     ),
-                    const SizedBox(
-                      height: 40,
+                    SizedBox(
+                      height: screenHeight * 0.2,
                     ),
                     const Text(
-                      'Web3Auth',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 36,
-                        color: Color(0xFF0364ff),
+                      'Log in or sign up',
+                      style:
+                          TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(
+                      height: 15,
+                    ),
+                    Container(
+                      width: screenWidth * 0.7,
+                      height: screenHeight * 0.06,
+                      decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20)),
+                      child: TextField(
+                        controller: emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        textAlign: TextAlign.start,
+                        enableInteractiveSelection: true,
+                        enableSuggestions: true,
+                        decoration: const InputDecoration(
+                          fillColor: Color.fromARGB(231, 221, 220, 220),
+                          filled: true,
+                          hintText: 'Input Email',
+                          border: InputBorder.none,
+                        ),
                       ),
                     ),
                     const SizedBox(
                       height: 10,
                     ),
-                    const Text(
-                      'Welcome to Web3Auth x Flutter Quick Start Demo',
-                      style: TextStyle(fontSize: 14),
-                    ),
-                    const SizedBox(
-                      height: 20,
-                    ),
-                    const Text(
-                      'Login with',
-                      style: TextStyle(fontSize: 12),
-                    ),
-                    const SizedBox(
-                      height: 20,
-                    ),
-                    // Text field for entering the user's email
-                    TextField(
-                      controller: emailController,
-                      decoration: const InputDecoration(
-                        labelText: 'Enter Email',
+                    SizedBox(
+                      width: screenWidth * 0.7,
+                      height: screenHeight * 0.06,
+                      child: ElevatedButton(
+                        onPressed: _login(
+                          () => _withEmailPasswordless(emailController.text),
+                        ),
+                        style: ButtonStyle(
+                          backgroundColor:
+                              WidgetStateProperty.resolveWith<Color>(
+                                  (Set<WidgetState> states) {
+                            if (states.contains(
+                              WidgetState.pressed,
+                            )) {
+                              return Colors.black;
+                            }
+                            return Colors.grey;
+                          }),
+                          foregroundColor: WidgetStateProperty.all(
+                              const Color.fromARGB(255, 255, 255, 255)),
+                          shape: WidgetStateProperty.all(RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10))),
+                          textStyle: WidgetStateProperty.all(const TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold)),
+                        ),
+                        child: const Text('Continue'),
                       ),
-                    ),
-                    ElevatedButton(
-                      onPressed: _login(
-                        () => _withEmailPasswordless(emailController.text),
-                      ),
-                      child: const Text('Login with Email Passwordless'),
                     ),
                   ],
                 ),
@@ -177,49 +233,198 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
               ElevatedButtonTheme(
                 data: ElevatedButtonThemeData(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color.fromARGB(255, 195, 47, 233),
-                    foregroundColor: Colors.white,
-                  ),
+                      backgroundColor: const Color.fromARGB(0, 0, 0, 0),
+                      foregroundColor: const Color.fromARGB(255, 255, 255, 255),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                      textStyle: const TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.bold)),
                 ),
                 child: Visibility(
                   visible: logoutVisible,
                   child: Column(
                     children: [
-                      Center(
+                      Stack(children: [
+                        Container(
+                          height: screenHeight * 0.41,
+                          width: screenWidth * 0.9,
+                          color: Colors.transparent,
+                        ),
+                        Container(
+                            height: screenHeight * 0.4,
+                            width: screenWidth * 0.9,
+                            decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(15)),
+                            child: WalletBalance()),
+                        Positioned(
+                            bottom: 0.0,
+                            left: screenWidth * 0.05,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: Colors.transparent),
+                                boxShadow: [
+                                  BoxShadow(
+                                      blurRadius: 6,
+                                      spreadRadius: 4,
+                                      color: Colors.black.withOpacity(0.1),
+                                      offset: Offset(0, 4))
+                                ],
+                                color: bgcol,
+                              ),
+                              height: screenHeight * 0.03,
+                              width: screenWidth * 0.8,
+                            )),
+                            Positioned(
+                            bottom: 9,
+                            left: screenWidth * 0.03,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                
+                                border: Border.all(color: Colors.transparent),
+                                
+                                color: Colors.white,
+                              ),
+                              height: screenHeight * 0.03,
+                              width: screenWidth * 0.84,
+                            )),
+                      ]),
+                      Row(
+                        children: [
+                          SizedBox(width: screenWidth * 0.08),
+                          Container(
+                              padding: EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(15),
+                              ),
+                              height: screenHeight * 0.2,
+                              width: screenWidth * 0.43,
+                              child: CircularPercentIndicator(
+                                radius: 60.0,
+                                lineWidth: 15.0,
+                                percent: 0.87,
+                                center: Text("87%"),
+                                progressColor:
+                                    Color.fromARGB(255, 16, 185, 129),
+                                footer: Text("Trust Score",
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 15)),
+                              )),
+                          SizedBox(
+                            width: screenWidth * 0.03,
+                          ),
+                          Container(
+                            padding: EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(15),
+                              color: Colors.transparent,
+                            ),
+                            height: screenHeight * 0.2,
+                            width: screenWidth * 0.43,
+                            child: Column(
+                              children: [
+                                SizedBox(
+                                    height: screenHeight * 0.13,
+                                    width: screenWidth * 0.43,
+                                    child: Image.asset('assets/rank1.gif')),
+                                Text(
+                                  'Vanguard',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                )
+                              ],
+                            ),
+                          )
+                        ],
+                      ),
+                      SizedBox(
+                        height: 5,
+                      ),
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        child: Builder(builder: (context) {
+                          return Container(
+                            height: screenHeight * 0.15,
+                            width: screenWidth * 0.9,
+                            decoration: BoxDecoration(
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black
+                                        .withOpacity(0.1), // shadow color
+                                    spreadRadius: 4,
+                                    blurRadius: 6,
+                                    offset: const Offset(
+                                        0, 4), // horizontal, vertical
+                                  ),
+                                ],
+                                color: textcol,
+                                borderRadius: BorderRadius.circular(15)),
+                            child: ElevatedButton(
+                              style: ButtonStyle(
+                                shadowColor: WidgetStateProperty.all(
+                                    Color.fromARGB(20, 0, 0, 0)),
+                                elevation: const WidgetStatePropertyAll(8),
+                                backgroundColor:
+                                    WidgetStateProperty.all(Colors.white),
+                              ),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => ChatsPage(),
+                                  ),
+                                );
+                              },
+                              child: Column(
+                                children: [
+                                  SizedBox(
+                                    height: screenHeight * 0.025,
+                                  ),
+                                  Text(
+                                    'Enter ArbiChat',
+                                    style: TextStyle(color: textcol),
+                                  ),
+                                  SizedBox(
+                                    height: screenHeight * 0.02,
+                                  ),
+                                  Divider(
+                                    color: Color.fromARGB(255, 229, 231, 235),
+                                  ),
+                                  SizedBox(
+                                    height: screenHeight * 0.02,
+                                  ),
+                                  Icon(
+                                    Icons.arrow_right_alt,
+                                    color: textcol,
+                                  )
+                                ],
+                              ),
+                            ),
+                          );
+                        }),
+                      ),
+                      Container(
+                        height: screenHeight * 0.05,
+                        width: screenWidth * 0.9,
+                        decoration: BoxDecoration(boxShadow: [
+                          BoxShadow(
+                            color:
+                                Colors.black.withOpacity(0.1),
+                            spreadRadius: 4,
+                            blurRadius: 6,
+                            offset: const Offset(0, 4),
+                          ),
+                        ], borderRadius: BorderRadius.circular(15)),
                         child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.red[600],
+                              backgroundColor:
+                                  const Color.fromARGB(202, 189, 4, 4),
                               foregroundColor: Colors.white,
                             ),
                             onPressed: _logout(),
-                            child: const Column(
-                              children: [
-                                Text('Logout'),
-                              ],
-                            )),
+                            child: Text('Logout')),
                       ),
-                      SizedBox(
-                          height: 0.2 * (MediaQuery.of(context).size.height)),
-                      
-                      WalletBalance(),
-                      Builder(builder: (context) {
-                        return ElevatedButton(
-                          
-                          style: ButtonStyle(
-                              elevation: WidgetStatePropertyAll(10),
-                              backgroundColor: WidgetStateProperty.all(Colors.grey[800]),
-                              ),
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => ChatsPage(),
-                              ),
-                            );
-                          },
-                          child: const Text('Enter ArbiChat'),
-                        );
-                      }),
                     ],
                   ),
                 ),
@@ -229,7 +434,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
                 child: Text(_result),
               )
             ],
-          )),
+          ),
         ),
       ),
     );
@@ -251,12 +456,12 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
               'walletAddress': walletAddress,
             });
           } else {
-            // Optionally, you can log or handle the case when it already exists
+            //log when it already exists
             log("Wallet address already exists in Firestore: $walletAddress");
           }
         }
 
-        // Retrieve wallet address (for example, from `_getAddress`)
+        // Retrieve wallet address
         final walletAddress = await _getAddress();
 
         // Save the wallet address to Firestore
@@ -312,8 +517,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       // IMP END - Login
     } catch (e) {
       log("Error during email/passwordless login: $e");
-      // Handle the error as needed
-      // You might want to show a user-friendly message or log the error
+      // Handle the error
       return Future.error("Login failed");
     }
   }
@@ -330,7 +534,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         // If it doesn't exist, create a new document
         await userDocRef.set({'email': email});
       } else {
-        // If it exists, you can update the document with the email
+        // If it exists, update the document with the email
         await userDocRef.update({'email': email});
         log("Email updated in Firestore for wallet address: $walletAddress");
       }
@@ -342,10 +546,10 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   Future<TorusUserInfo> _getUserInfo() async {
     try {
       TorusUserInfo userInfo = await Web3AuthFlutter.getUserInfo();
-      log(userInfo.toString());
-      setState(() {
-        _result = userInfo.toString();
-      });
+      //log(userInfo.toString());
+      //setState(() {
+      // _result = userInfo.toString();
+      //});
       return userInfo;
     } catch (e) {
       log("Error during email/passwordless login: $e");
@@ -357,7 +561,11 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
   Future<String> _getAddress() async {
     final prefs = await SharedPreferences.getInstance();
-    final privateKey = prefs.getString('privateKey') ?? '0';
+    final privateKey = prefs.getString('privateKey');
+    print("Private key from SharedPreferences: $privateKey");
+    if (privateKey == null || privateKey.isEmpty || privateKey.length < 64) {
+      throw Exception("Invalid or missing private key");
+    }
 
     final credentials = web3dart.EthPrivateKey.fromHex(privateKey);
     final address = credentials.address;

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:w3aflutter/main.dart';
+import 'package:arbichat/main.dart';
 import 'package:web3dart/web3dart.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:http/http.dart'; // For RPC calls
+import 'package:http/http.dart';
 
 Future<void> sendTip({
   required double tipAmount,
@@ -15,7 +15,7 @@ Future<void> sendTip({
   if (tipAmount < minTipAmount) {
     // Show a Snackbar for invalid tip amounts
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
+      const SnackBar(
         content: Text('Invalid tip amount: Must be at least $minTipAmount ETH'),
         duration: Duration(seconds: 2),
       ),
@@ -44,9 +44,6 @@ Future<void> sendTip({
 
     // Derive sender address
     final senderAddress = credentials.address;
-
-    // Convert ETH to wei
-    //final tipInWei = BigInt.from((tipAmount * BigInt.from(10).pow(18).toDouble()).toInt());
 
     // Convert ETH to Wei manually
     final tipInWei =
@@ -89,11 +86,11 @@ Future<void> sendTip({
       context: navigatorKey.currentContext!,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Transaction Successful'),
+          title: const Text('Transaction Successful'),
           content: Text('$tipAmount ETH tip sent successfully to $recipientAddress.\nTransaction Hash:\n$txHash'),
           actions: [
             TextButton(
-              child: Text('OK'),
+              child: const Text('OK'),
               onPressed: () {
                 Navigator.of(context).pop();
               },
@@ -110,11 +107,11 @@ Future<void> sendTip({
       context: navigatorKey.currentContext!,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Transaction Failed'),
+          title: const Text('Transaction Failed'),
           content: Text('Error: $e'),
           actions: [
             TextButton(
-              child: Text('OK'),
+              child: const Text('OK'),
               onPressed: () {
                 Navigator.of(context).pop();
               },

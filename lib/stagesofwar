@@ -1,0 +1,71 @@
+Stage 2: Smart Contract for Messaging Metadata
+Goal: Deploy a basic smart contract to store message references and sender/receiver data.
+
+What to Build:
+
+✅ Solidity contract with sendMessage(to, cid, timestamp) function
+✅ Function to retrieve messages (e.g., getMessages(address))
+Tech:
+
+Solidity (Remix or Foundry)
+Ganache or testnet (Polygon Mumbai, etc.)
+Tests:
+
+ Can I send a message entry (with CID) on-chain?
+ Can I retrieve messages for a user?
+✅ Stage 3: Message Encryption + IPFS Upload System
+Goal: Encrypt messages and store them off-chain securely.
+
+What to Build:
+
+✅ Encryption service (using PointyCastle or OpenPGP)
+✅ IPFS upload using web3.storage API
+✅ Return CID from IPFS
+Tech:
+
+http package, pointycastle, web3.storage
+Tests:
+
+ Can I encrypt a message using a public key?
+ Can I upload to IPFS and get a CID?
+ Can I download & decrypt with private key?
+✅ Stage 4: Chain + Off-chain Messaging Integration
+Goal: Fully send messages from the app.
+
+What to Build:
+
+✅ Messaging screen (UI)
+✅ When user sends a message:
+Encrypt message
+Upload to IPFS
+Send CID on-chain
+✅ Show sent messages in chat view
+Tech:
+
+Connect all previous modules
+Add local caching (Hive)
+Tests:
+
+ Can I send a full message (end-to-end)?
+ Can I receive and view messages securely?
+✅ Stage 5: Reputation System Integration
+Goal: Implement and test the reputation logic
+
+What to Build:
+
+✅ Smart contract function: updateReputation()
+✅ Formula integration (your new simplified version)
+✅ UI badge or rating for each user
+Tests:
+
+ Can I track reputation changes over time?
+ Can I see how reputation affects trust labels?
+✅ Stage 6: Polish, Testing, and Report Integration
+Goal: Clean up, prepare screenshots for defense, polish app
+
+What to Finalize:
+
+✅ Add caching/optimization
+✅ Add error messages, UX feedback
+✅ Capture screenshots + code snippets for defense
+✅ Generate sample logs for appendix/testing

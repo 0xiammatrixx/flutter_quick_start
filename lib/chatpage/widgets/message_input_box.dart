@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:w3aflutter/chatpage/transaction/tip_transaction.dart';
-import 'package:w3aflutter/main.dart';
+import 'package:arbichat/chatpage/transaction/tip_transaction.dart';
+import 'package:arbichat/main.dart';
 
 class MessageInput extends StatelessWidget {
   final TextEditingController controller;
@@ -42,36 +42,36 @@ class MessageInput extends StatelessWidget {
             onPressed: onVoiceRecord,
           ),
           IconButton(
-            icon: Icon(Icons.attach_money),
+            icon: const Icon(Icons.attach_money),
             onPressed: () {
               showDialog(
                 context: context,
                 builder: (BuildContext context) {
                   double tipAmount = 0.0;
                   return AlertDialog(
-                    title: Text('Send a Tip'),
+                    title: const Text('Send a Tip'),
                     content: TextField(
                       keyboardType:
-                          TextInputType.numberWithOptions(decimal: true),
+                          const TextInputType.numberWithOptions(decimal: true),
                       decoration:
-                          InputDecoration(hintText: 'Enter amount in ETH'),
+                          const InputDecoration(hintText: 'Enter amount in ETH'),
                       onChanged: (value) {
                         tipAmount = double.tryParse(value) ?? 0.0;
                       },
                     ),
                     actions: [
                       TextButton(
-                        child: Text('Cancel'),
+                        child: const Text('Cancel'),
                         onPressed: () {
                           Navigator.of(context).pop();
                         },
                       ),
                       TextButton(
-                        child: Text('Send Tip'),
+                        child: const Text('Send Tip'),
                         onPressed: () async {
                           if (tipAmount < 0.0001) {
                             ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
-                              SnackBar(content: Text('Invalid tip amount: Must be at least 0.0001 ETH'))
+                              const SnackBar(content: Text('Invalid tip amount: Must be at least 0.0001 ETH'))
                             );
                             print(
                                 'Invalid tip amount: Must be at least 0.0001 ETH');

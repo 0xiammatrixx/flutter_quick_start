@@ -1,122 +1,135 @@
 import 'package:flutter/material.dart';
+import 'package:arbichat/chatpage/transaction/wallet_widget.dart';
 import 'package:web3dart/web3dart.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class WalletBalance extends StatefulWidget {
+  const WalletBalance({super.key});
+
   @override
   _WalletBalanceState createState() => _WalletBalanceState();
 }
 
 class _WalletBalanceState extends State<WalletBalance> {
-  final String _rpcUrl = "https://rpc.ankr.com/arbitrum_sepolia";
+  
+  final String _rpcUrl = "https://arbitrum-sepolia-rpc.publicnode.com";
   late Web3Client _web3Client;
   EthereumAddress? _walletAddress;
   EtherAmount? _balance;
-  bool _isLoading = false; // Set loading to false initially
   String? _error;
 
   @override
   void initState() {
     super.initState();
     _web3Client = Web3Client(_rpcUrl, http.Client());
-    _fetchWalletAddress(); // Fetch the wallet address during initialization
+    _initializeWallet(); // Start whole process
   }
 
-  // Fetch wallet address from SharedPreferences
-  Future<void> _fetchWalletAddress() async {
+  DateTime today = DateTime.now();
+
+  Future<void> _initializeWallet() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final privateKey = prefs.getString('privateKey');
+      final rawKey = prefs.getString('privateKey');
+      print(" Raw privateKey from prefs: $rawKey");
 
-      if (privateKey == null || privateKey.isEmpty) {
+      if (rawKey == null || rawKey.isEmpty) {
         setState(() {
-          _error = "No wallet address found. Please log in again.";
+          _error = "Invalid or missing private key. Please log in again.";
         });
         return;
       }
+      final privateKey = rawKey.startsWith("0x") ? rawKey : "0x$rawKey";
+      print(" Normalized privateKey: $privateKey");
 
+      print(" Creating credentials from privateKey...");
       final credentials = EthPrivateKey.fromHex(privateKey);
-      setState(() {
-        _walletAddress = credentials.address;
-      });
-    } catch (e) {
-      setState(() {
-        _error = "Failed to retrieve wallet address: $e";
-      });
-    }
-  }
+      final address = credentials.address;
+      print(" Wallet Address: ${address.hexEip55}");
 
-  // Fetch the balance of the wallet
-  Future<void> _fetchBalance() async {
-    if (_walletAddress == null) {
       setState(() {
-        _error = "Wallet address is not available.";
+        _walletAddress = address;
       });
-      return;
-    }
 
-    setState(() {
-      _isLoading = true; // Start loading when button is pressed
-    });
+      print(" Fetching wallet balance from blockchain...");
+      final balanceInWei = await _web3Client.getBalance(address);
+      print(" Wallet balance (in Wei): ${balanceInWei.getInWei}");
 
-    try {
-      // Fetch balance in Wei
-      EtherAmount balanceInWei = await _web3Client.getBalance(_walletAddress!);
-      // Update state with the balance
       setState(() {
         _balance = balanceInWei;
-        _isLoading = false; // Stop loading when done
       });
-    } catch (e) {
+    } catch (e, stack) {
+      print(" Exception caught during wallet initialization:");
+      print("Error: $e");
+      print("Stack Trace: $stack");
       setState(() {
-        _error = "Error fetching balance: $e";
-        _isLoading = false; // Stop loading on error
+        _error = "Failed to load wallet: $e";
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container( padding: EdgeInsets.all(15),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (_error != null) ...[
-              Text(
-                _error!,
-                style: TextStyle(color: Colors.red, fontSize: 16),
-                textAlign: TextAlign.center,
-              ),
-              SizedBox(height: 20),
-            ] else if (_walletAddress != null) ...[
-              Text(
-                "Wallet Address: ${_walletAddress!.hexEip55}",
-                style: TextStyle(fontSize: 16),
-              ),
-              SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _fetchBalance, // Trigger balance fetch on press
-                child: Text("Get Wallet Balance"),
-              ),
-              SizedBox(height: 20),
-              _isLoading
-                  ? CircularProgressIndicator() // Show loading spinner
-                  : _balance == null
-                      ? Text("") // Message if no balance yet
-                      : Text(
-                          "Wallet Balance: ${_balance!.getValueInUnit(EtherUnit.ether)} ETH",
-                          style: TextStyle(fontSize: 24), // Display balance
-                        ),
-            ] else ...[
-              CircularProgressIndicator(), // Show while loading the wallet address
-              SizedBox(height: 20),
-              Text("Fetching wallet address..."),
-            ],
-          ],
-        ),
+    String formattedDate =
+        '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+    return Container(
+      decoration: BoxDecoration(
+        boxShadow: [
+      BoxShadow(
+        color: Colors.black.withOpacity(0.1), // shadow color
+        spreadRadius: 4,
+        blurRadius: 6,
+        offset: const Offset(0, 4), // horizontal, vertical
       ),
+    ],
+          borderRadius: BorderRadius.circular(15), color: Colors.white),
+      padding: const EdgeInsets.all(20),
+      
+      child: _error != null
+          ? Text(_error!, style: const TextStyle(color: Colors.red))
+          : _walletAddress == null || _balance == null
+              ? const Center(child: CircularProgressIndicator(color: Colors.black,))
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Welcome,',
+                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                          ),
+                          SizedBox(height: 20,),
+                          walletAddressPill(_walletAddress!.hexEip55),
+                          const SizedBox(height: 50),
+                          Text(
+                            'Current Balance',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 20),
+                          ),
+                          Text('Today: $formattedDate')
+                        ],
+                      ),
+                    ),
+                    Container(
+                      child: Row(
+                        children: [
+                          SizedBox(
+                              height: 45,
+                              width: 45,
+                              child: Image.asset('assets/eth_logo.webp')),
+                          Text(
+                            '${_balance!.getValueInUnit(EtherUnit.ether).toStringAsFixed(4)}',
+                            style: TextStyle(fontSize: 70),
+                          ),
+                          Text('ETH'),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
     );
   }
 
