@@ -29,7 +29,7 @@ ArbiChat combines decentralized identifiers, real-time messaging, and blockchain
 
 ### **3. Optional Verification System**  
 - **Trust Score:**  
-  - Users can verify their identity by affirming the name associated with their wallet address. Verified identities increase the trust score, allowing for safer one-on-one interactions.  
+  - Users will be able to verify their identity by affirming the name associated with their wallet address. Verified identities increase the trust score, allowing for safer one-on-one interactions.  
 - **Human Protocol-Inspired:**  
   - This feature encourages trust-based transactions and enhances user credibility within the app.  
 
@@ -44,7 +44,7 @@ ArbiChat combines decentralized identifiers, real-time messaging, and blockchain
 ## **Walkthrough**  
 
 - **Watch the Full Walkthrough Video Here:**  
-  *![ArbiChat Walkthrough](arbiChat_walkthrough.mp4)*
+  *[![ArbiChat Walkthrough](https://img.youtube.com/vi/FrANv7GnACM/0.jpg)]((https://www.youtube.com/watch?v=FrANv7GnACM))*
   
 - **Transaction sent during walkthrough:**
   *![Completed Transaction Proof](assets/arbitrum-video-transaction.png)*
@@ -54,6 +54,12 @@ ArbiChat combines decentralized identifiers, real-time messaging, and blockchain
      - *![Cloud FireStore](assets/arbitrum-database=cloud-firestore.png)*  
   2. **Cloud Firestore Document Example:**  
      - *![Cloud Firestore](assets/arb-database-two.png)*  
+
+---
+
+## **Download the APK**  
+You can download the latest APK directly from this repository:  
+- [Download APK](#)
 
 ---
 
@@ -72,20 +78,6 @@ ArbiChat combines decentralized identifiers, real-time messaging, and blockchain
    flutter run
    ```  
 
----
-
-## **Download the APK**  
-You can download the latest APK directly from this repository:  
-- [Download APK](#)  
-
-To quickly generate the APK:  
-1. Run the command:  
-   ```bash
-   flutter build apk --release
-   ```  
-2. The APK will be available in the `build/app/outputs/flutter-apk` directory.
-
----
 
 ## **Tech Stack**  
 - **Frontend:** Flutter  
@@ -104,8 +96,3 @@ Feel free to fork the repository, raise issues, or submit pull requests for impr
 MIT License.  
 
 ---
-
-### For Including APK in the README  
-1. Generate the APK using the `flutter build apk --release` command.  
-2. Upload the generated APK to a file-sharing platform (e.g., Google Drive, GitHub Releases).  
-3. Update the README with a link to the APK under the "Download the APK" section.
