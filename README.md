@@ -8,38 +8,37 @@ A decentralized messaging app with integrated cryptocurrency functionalities, de
 ---
 
 ## **Overview**  
-ArbiChat combines decentralized identifiers, real-time messaging, and blockchain-enabled tipping, empowering users with crypto anonymity while ensuring ease of interaction and verifiability.
+ArbiChat combines decentralized identifiers, real-time messaging, and blockchain-enabled tipping, empowering users with crypto anonymity while ensuring ease of interaction and verifiability. It solves the problem of direct contact with verifiable wallet addresses for one-on-one transactions while still keeping users anonymous as is appreciated in the crypto community.
 
 ---
 
 ## **Features**  
 ### **1. Onboarding & Wallet Setup**  
 - **Private Key Management:**  
-  - Users are onboarded via Web3Auth, which generates a unique private key stored securely in SharedPreferences.  
+  - Users are onboarded via Web3Auth, which generates a unique private key stored securely in SharedPreferences. SharedPreferences is then accessed throughout the application to gain access to the private key itself, and the wallet address associated with it, as this is the identity of the onboarded user.  
 - **Data Storage:**  
   - Wallet addresses and emails are saved to Cloud Firestore, ensuring streamlined user identification while preserving decentralization.  
 - **Balance Retrieval:**  
-  - The app uses Web3dart and a Web3 client to fetch and display wallet balances in real-time.  
+  - The app uses Web3dart and a Web3 client to fetch and display wallet balances in real-time. Since transactions ar going to be made, it is easier when the balance can be seen in-app instead of adding private key to a wallet and going through the stress of leaving the app to check your balance each time you want to transact  
 
 ### **2. Real-Time Messaging**  
 - **Secure Messaging:**  
   - Messages are stored in and retrieved from Cloud Firestore, enabling reliable and real-time communication.  
 - **Decentralized Identifiers:**  
-  - Wallet addresses function as unique, blockchain-based user identifiers.  
+  - Wallet addresses function as unique, blockchain-based user identifiers.    
 
-### **3. Optional Verification System**  
-- **Trust Score:**  
-  - Users will be able to verify their identity by affirming the name associated with their wallet address. Verified identities increase the trust score, allowing for safer one-on-one interactions.  
-- **Human Protocol-Inspired:**  
-  - This feature encourages trust-based transactions and enhances user credibility within the app.  
-
-### **4. Tipping Functionality**  
+### **3. Tipping Functionality**  
 - **Crypto Tips Made Easy:**  
   - Users can send tips directly to another wallet address using the private key stored locally.  
 - **Transaction Security:**  
   - Web3dart ensures secure and hassle-free transactions between verified users.  
 
 ### There's honestly a whole lot that I have in mind to add, but because of the constraint of time, I have to submit this as is.
+### The main idea that I love the most about this app that will set it apart is the **Optional Verification System**  
+- **Trust Score:**  
+  - Users will be able to verify their identity by affirming the name associated with their wallet address. Verified identities increase the trust score, allowing for safer one-on-one interactions. So you can say you are Mr A, but until real users affirm that you are Mr A, you wont be verified to bear the name Mr A.
+- **This idea was Human Protocol-Inspired:**  
+  - This feature encourages trust-based transactions and enhances user credibility within the app.
 
 ---
 
