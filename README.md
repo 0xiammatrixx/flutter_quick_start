@@ -15,7 +15,7 @@ ArbiChat combines decentralized identifiers, real-time messaging, and blockchain
 ## **Features**  
 ### **1. Onboarding & Wallet Setup**  
 - **Private Key Management:**  
-  - Users are onboarded via Web3Auth, which generates a unique private key stored securely in SharedPreferences. SharedPreferences is then accessed throughout the application to gain access to the private key itself, and the wallet address associated with it, as this is the identity of the onboarded user.  
+  - Users are onboarded via Web3Auth, which generates a unique private key stored securely in SharedPreferences. SharedPreferences is then accessed throughout the application to gain access to the private key itself, and the wallet address associated with it, as this is the identity of the onboarded user. The user will be able to stay logged in for about 3 days, that is, if you login, for the next three days, the app logs you in by itslef automatically.
 - **Data Storage:**  
   - Wallet addresses and emails are saved to Cloud Firestore, ensuring streamlined user identification while preserving decentralization.  
 - **Balance Retrieval:**  
