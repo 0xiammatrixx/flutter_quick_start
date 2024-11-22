@@ -33,7 +33,7 @@ ArbiChat combines decentralized identifiers, real-time messaging, and blockchain
 - **Transaction Security:**  
   - Web3dart ensures secure and hassle-free transactions between verified users.  
 
-### There's honestly a whole lot that I have in mind to add, but because of the constraint of time, I have to submit this as is.
+### There's honestly a whole lot that I have in mind to add, but because of the constraint of time, I have to submit this as is. Basic things like editing profile are not yet available.
 ### The main idea that I love the most about this app that will set it apart is the **Optional Verification System**  
 - **Trust Score:**  
   - Users will be able to verify their identity by affirming the name associated with their wallet address. Verified identities increase the trust score, allowing for safer one-on-one interactions. So you can say you are Mr A, but until real users affirm that you are Mr A, you wont be verified to bear the name Mr A.
@@ -61,6 +61,10 @@ ArbiChat combines decentralized identifiers, real-time messaging, and blockchain
 ## **Download the APK**  
 You can download the latest APK directly from this repository:  
 - [[Download APK](https://github.com/0xiammatrixx/flutter_quick_start/releases/download/v1.0.0-alpha/ArbiChat.v1.0.0.apk)](#)
+- **These are the current addresses active on the application in case it should be tested**
+- 0xd04d75A49f88319e2fDcCBC5542236194Ec1E942
+- 0x96a142a54AC31Fac2E8Ae2FFc97F0c929C85BE66
+- 0x8D6CD4Dd30E8A39205377D3089d2c971c363c3f2
 
 ---
 
