@@ -39,6 +39,8 @@ ArbiChat combines decentralized identifiers, real-time messaging, and blockchain
 - **Transaction Security:**  
   - Web3dart ensures secure and hassle-free transactions between verified users.  
 
+### There's honestly a whole lot that I have in mind to add, but because of the constraint of time, I have to submit this as is.
+
 ---
 
 ## **Walkthrough**  
@@ -59,25 +61,9 @@ ArbiChat combines decentralized identifiers, real-time messaging, and blockchain
 
 ## **Download the APK**  
 You can download the latest APK directly from this repository:  
-- [Download APK](#)
+- [[Download APK](https://github.com/0xiammatrixx/flutter_quick_start/releases/download/v1.0.0-alpha/ArbiChat.v1.0.0.apk)](#)
 
 ---
-
-## **Installation Guide**  
-### Prerequisites:  
-1. Flutter SDK installed.  
-2. Firebase project set up and configured for the app.  
-3. Web3Auth and Web3dart dependencies added to the project.  
-
-### Steps to Run:  
-1. Clone the repository.  
-2. Add your Firebase configuration file (`google-services.json`) to the project.  
-3. Run the following commands:  
-   ```bash
-   flutter pub get
-   flutter run
-   ```  
-
 
 ## **Tech Stack**  
 - **Frontend:** Flutter  
