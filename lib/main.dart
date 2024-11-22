@@ -38,7 +38,7 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   String _result = '';
   bool logoutVisible = false;
-  String rpcUrl = 'https://rpc.ankr.com/eth_sepolia';
+  String rpcUrl = 'https://rpc.ankr.com/arbitrum_sepolia';
   // TextEditingController for handling input from the text field
   final TextEditingController emailController = TextEditingController();
 
