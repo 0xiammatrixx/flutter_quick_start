@@ -1,0 +1,54 @@
+PODS:
+  - BigInt (5.2.0)
+  - curvelib.swift (1.0.1)
+  - Flutter (1.0.0)
+  - KeychainSwift (20.0.0)
+  - shared_preferences_foundation (0.0.1):
+    - Flutter
+    - FlutterMacOS
+  - TorusSessionManager (4.0.2):
+    - curvelib.swift (~> 1.0.1)
+    - KeychainSwift (~> 20.0.0)
+  - Web3Auth (9.0.0):
+    - BigInt (~> 5.2.0)
+    - curvelib.swift (~> 1.0.1)
+    - KeychainSwift (~> 20.0.0)
+    - TorusSessionManager (~> 4.0.2)
+  - web3auth_flutter (2.0.1):
+    - Flutter
+    - Web3Auth (~> 9.0.0)
+
+DEPENDENCIES:
+  - Flutter (from `Flutter`)
+  - shared_preferences_foundation (from `.symlinks/plugins/shared_preferences_foundation/darwin`)
+  - web3auth_flutter (from `.symlinks/plugins/web3auth_flutter/ios`)
+
+SPEC REPOS:
+  trunk:
+    - BigInt
+    - curvelib.swift
+    - KeychainSwift
+    - TorusSessionManager
+    - Web3Auth
+
+EXTERNAL SOURCES:
+  Flutter:
+    :path: Flutter
+  shared_preferences_foundation:
+    :path: ".symlinks/plugins/shared_preferences_foundation/darwin"
+  web3auth_flutter:
+    :path: ".symlinks/plugins/web3auth_flutter/ios"
+
+SPEC CHECKSUMS:
+  BigInt: f668a80089607f521586bbe29513d708491ef2f7
+  curvelib.swift: d0746ae82bee34016c06da3567a97e493b3c979f
+  Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
+  KeychainSwift: 0ce6a4d13f7228054d1a71bb1b500448fb2ab837
+  shared_preferences_foundation: b4c3b4cddf1c21f02770737f147a3f5da9d39695
+  TorusSessionManager: 05a1a8f3265d0949a1a342c4ba2c52882445b614
+  Web3Auth: 086b5152a43df347ceff196c0ce67f6330838884
+  web3auth_flutter: bc5ffefe573c72f7fb1814573269952b045b7b22
+
+PODFILE CHECKSUM: 617d992413452517fc165846a57084923e4df00d
+
+COCOAPODS: 1.14.3

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "671767459701",
+    "project_id": "arbi-chat-1d2f5",
+    "storage_bucket": "arbi-chat-1d2f5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:671767459701:android:404d2a821afd41678dc53c",
+        "android_client_info": {
+          "package_name": "com.example.w3aflutter"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAHCO6j2F-ZRhRZMxF2NhyH2J3eUCKHUDo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
