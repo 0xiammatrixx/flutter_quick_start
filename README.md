@@ -3,7 +3,7 @@
 ---
 
 # **ArbiChat**  
-A decentralized messaging app with integrated cryptocurrency functionalities, designed for secure communication, seamless transactions, and a trust-driven community.  
+A decentralized messaging mobile app with integrated cryptocurrency functionalities, designed for secure communication, seamless transactions, and a trust-driven community.  
 
 ---
 
