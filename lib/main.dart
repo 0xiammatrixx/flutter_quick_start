@@ -13,8 +13,6 @@ import 'package:web3auth_flutter/enums.dart';
 import 'package:web3auth_flutter/input.dart';
 import 'package:web3auth_flutter/output.dart';
 import 'package:web3auth_flutter/web3auth_flutter.dart';
-
-import 'package:http/http.dart';
 import 'package:web3dart/web3dart.dart' as web3dart;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -372,7 +370,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => ChatsPage(),
+                                    builder: (context) => const ChatsPage(),
                                   ),
                                 );
                               },
@@ -543,21 +541,21 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     }
   }
 
-  Future<TorusUserInfo> _getUserInfo() async {
-    try {
-      TorusUserInfo userInfo = await Web3AuthFlutter.getUserInfo();
-      //log(userInfo.toString());
-      //setState(() {
-      // _result = userInfo.toString();
-      //});
-      return userInfo;
-    } catch (e) {
-      log("Error during email/passwordless login: $e");
-      // Handle the error as needed
-      // You might want to show a user-friendly message or log the error
-      return Future.error("Login failed");
-    }
-  }
+  // Future<TorusUserInfo> _getUserInfo() async {
+  //   try {
+  //     TorusUserInfo userInfo = await Web3AuthFlutter.getUserInfo();
+  //     //log(userInfo.toString());
+  //     //setState(() {
+  //     // _result = userInfo.toString();
+  //     //});
+  //     return userInfo;
+  //   } catch (e) {
+  //     log("Error during email/passwordless login: $e");
+  //     // Handle the error as needed
+  //     // You might want to show a user-friendly message or log the error
+  //     return Future.error("Login failed");
+  //   }
+  // }
 
   Future<String> _getAddress() async {
     final prefs = await SharedPreferences.getInstance();
@@ -574,73 +572,5 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       _result = address.hexEip55.toString();
     });
     return address.hexEip55;
-  }
-
-  Future<web3dart.EtherAmount> _getBalance() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final privateKey = prefs.getString('privateKey') ?? '0';
-
-      final client = web3dart.Web3Client(rpcUrl, Client());
-      final credentials = web3dart.EthPrivateKey.fromHex(privateKey);
-      final address = credentials.address;
-
-      // Get the balance in wei
-      final weiBalance = await client.getBalance(address);
-
-      // Convert wei to ether
-      final etherBalance = web3dart.EtherAmount.fromBigInt(
-        web3dart.EtherUnit.ether,
-        weiBalance.getInEther,
-      );
-
-      log(etherBalance.toString());
-
-      setState(() {
-        _result = etherBalance.toString();
-      });
-
-      return etherBalance;
-    } catch (e) {
-      // Handle errors as needed
-      log("Error getting balance: $e");
-      return web3dart.EtherAmount.zero();
-    }
-  }
-
-  Future<String> _sendTransaction() async {
-    final prefs = await SharedPreferences.getInstance();
-    final privateKey = prefs.getString('privateKey') ?? '0';
-
-    final client = web3dart.Web3Client(rpcUrl, Client());
-    final credentials = web3dart.EthPrivateKey.fromHex(privateKey);
-    final address = credentials.address;
-    try {
-      final receipt = await client.sendTransaction(
-        credentials,
-        web3dart.Transaction(
-          from: address,
-          to: web3dart.EthereumAddress.fromHex(
-            '0xeaA8Af602b2eDE45922818AE5f9f7FdE50cFa1A8',
-          ),
-          // gasPrice: EtherAmount.fromUnitAndValue(EtherUnit.gwei, 100),
-          value: web3dart.EtherAmount.fromInt(
-            web3dart.EtherUnit.gwei,
-            5000000,
-          ), // 0.005 ETH
-        ),
-        chainId: 11155111,
-      );
-      log(receipt);
-      setState(() {
-        _result = receipt;
-      });
-      return receipt;
-    } catch (e) {
-      setState(() {
-        _result = e.toString();
-      });
-      return e.toString();
-    }
   }
 }

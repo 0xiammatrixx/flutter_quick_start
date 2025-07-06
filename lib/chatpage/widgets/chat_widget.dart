@@ -25,7 +25,7 @@ class ChatTile extends StatelessWidget {
         style: const TextStyle(fontWeight: FontWeight.bold),
       ),
       subtitle: Text(
-        chat.message.plaintext ?? '[Encrypted]', // Directly use message data from the chat
+        chat.message.messageContent, // Directly use message data from the chat
         overflow: TextOverflow.ellipsis,
         maxLines: 1,
         style: TextStyle(
@@ -34,8 +34,7 @@ class ChatTile extends StatelessWidget {
               : FontWeight.bold,
         ),
       ),
-      trailing: Text(DateFormat('HH:mm').format(
-  DateTime.fromMillisecondsSinceEpoch(chat.message.timestamp.toInt() * 1000),
+      trailing: Text(DateFormat('HH:mm').format((chat.message.timestamp),
 )
 ),
       onTap: onTap,

@@ -10,12 +10,17 @@ import 'package:arbichat/on_chain/widget/pinata_ipfs.dart';
 import 'package:web3dart/web3dart.dart';
 
 class MessageTestPage extends StatefulWidget {
+  final UserProfile userProfile;
+  const MessageTestPage({
+    super.key,
+    required this.userProfile,
+  });
+
   @override
-  _MessageTestPageState createState() => _MessageTestPageState();
+  State<MessageTestPage> createState() => _MessageTestPageState();
 }
 
 class _MessageTestPageState extends State<MessageTestPage> {
-
   late Web3Client client;
   late DeployedContract contract;
   late EthPrivateKey credentials;
@@ -27,16 +32,13 @@ class _MessageTestPageState extends State<MessageTestPage> {
 
   late IpfsService ipfsService;
 
-  List<ChatMessage> messages = []; 
-
-  final EthereumAddress otherUserAddress =
-      EthereumAddress.fromHex("0x96a142a54ac31fac2e8ae2ffc97f0c929c85be66");
+  List<ChatMessage> messages = [];
 
   @override
   void initState() {
     super.initState();
     setup();
-    
+    print("Chatting with: ${widget.userProfile.name}");
   }
 
   Future<void> setup() async {
@@ -44,10 +46,11 @@ class _MessageTestPageState extends State<MessageTestPage> {
     final privateKey = prefs.getString('privateKey') ?? '0';
 
     client = Web3Client("https://sepolia-rollup.arbitrum.io/rpc", Client());
-    final abi = await rootBundle.loadString('assets/message_storage_abi.json');
+    final abi =
+        await rootBundle.loadString('assets/new_message_storage_abi.json');
     contract = DeployedContract(
       ContractAbi.fromJson(abi, "MessageStorage"),
-      EthereumAddress.fromHex("0x3ec85eb1970413642bd229e4e20a9254b030db19"),
+      EthereumAddress.fromHex("0x57b56bf9ed5a655074f3233fb6127945bdf743f7"),
     );
     credentials = EthPrivateKey.fromHex(privateKey);
     ownAddress = await credentials.extractAddress();
@@ -68,7 +71,6 @@ class _MessageTestPageState extends State<MessageTestPage> {
   }
 
   Future<void> sendMessage(String message) async {
-
     setState(() {
       status = 'Encrypting...';
     });
@@ -93,86 +95,35 @@ class _MessageTestPageState extends State<MessageTestPage> {
       status = 'Sending to blockchain...';
     });
 
-    
-
-    final toAddress =
-        '0xd04d75A49f88319e2fDcCBC5542236194Ec1E942'; // Use the recipient address
-    final timestamp = BigInt.from(DateTime.now().millisecondsSinceEpoch);
-
-    // Call the smart contract here
-    await messageStorageService.sendMessage(toAddress, cid!);
+    final receiver =
+        EthereumAddress.fromHex(widget.userProfile.walletAddress.toLowerCase());
+    await messageStorageService.sendMessage(receiver.hex, cid!);
 
     setState(() {
       status = 'Message sent with CID: $cid';
     });
   }
 
-  Future<void> testDirectContractCall() async {
-    setState(() {
-      status = 'Testing direct contract call...';
-    });
-    
-    try {
-      print("=== TESTING DIRECT CONTRACT CALL ===");
-      print("Your address: $ownAddress");
-      print("Target address: $otherUserAddress");
-      print("Contract address: ${contract.address}");
-      
-      // Test calling the contract directly with web3dart
-      final result = await client.call(
-        contract: contract,
-        function: messageStorageService.getMessagesFunction,
-        params: [otherUserAddress],
-      );
-      
-      print("Direct call result: $result");
-      print("Result type: ${result.runtimeType}");
-      print("Result length: ${result.length}");
-      
-      if (result.isNotEmpty) {
-        print("First element: ${result[0]}");
-        print("First element type: ${result[0].runtimeType}");
-        if (result[0] is List) {
-          print("Array length: ${(result[0] as List).length}");
-        }
-      }
-      
-      setState(() {
-        status = 'Direct call completed. Check console for details.';
-      });
-      
-    } catch (e) {
-      print("Direct call error: $e");
-      setState(() {
-        status = 'Direct call failed: $e';
-      });
-    }}
-
   Future<void> fetchMessages() async {
-    setState(() {
-      status = 'Fetching messages...';
-    });
+    setState(() => status = 'Fetching messages...');
 
     try {
+      final otherAddress = EthereumAddress.fromHex(
+          widget.userProfile.walletAddress.toLowerCase());
+      final fetchedRaw = await messageStorageService.getMessagesFromLogs(
+        userA: ownAddress,
+        userB: otherAddress,
+      );
       final fetchedMessages =
-      
-          await messageStorageService.getMessages(otherUserAddress);
-          print("=== FETCH RESULTS ===");
-      print("Number of messages fetched: ${fetchedMessages.length}");
-      print("Messages: $fetchedMessages");
-          
-      final parsedMessages = fetchedMessages.map<ChatMessage>((map) {
-        return ChatMessage.fromMap(map);
-      }).toList();
+          fetchedRaw.map((msgMap) => ChatMessage.fromMap(msgMap)).toList();
+
       setState(() {
-        messages = parsedMessages;
+        messages = fetchedMessages;
         status = 'Fetched ${messages.length} messages';
       });
     } catch (e) {
-      setState(() {
-        status = 'Failed to fetch messages: $e';
-        print('$e');
-      });
+      print("Fetch error: $e");
+      setState(() => status = 'Error: $e');
     }
   }
 
@@ -212,7 +163,22 @@ class _MessageTestPageState extends State<MessageTestPage> {
                 itemBuilder: (context, index) {
                   final msg = messages[index];
                   return ListTile(
-                    title: Text(msg.cid), // show CID or decrypted message here
+                    title: FutureBuilder(
+                      future: ipfsService.fetchFromIPFS(msg.cid),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return Text("Loading...");
+                        }
+                        if (snapshot.hasError) {
+                          return Text("Error loading message");
+                        }
+                        final decrypted =
+                            SimpleEncryptor.decrypt(snapshot.data!);
+                        return Text(decrypted);
+                      },
+                    ),
+// show CID or decrypted message here
                     subtitle: Text('From: ${msg.sender}\nAt: ${msg.timestamp}'),
                   );
                 },

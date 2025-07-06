@@ -1,3 +1,4 @@
+import 'package:web3dart/crypto.dart';
 import 'package:web3dart/web3dart.dart';
 
 class MessageStorageService {
@@ -6,7 +7,6 @@ class MessageStorageService {
   final EthereumAddress ownAddress;
   final Credentials credentials;
   late ContractFunction sendMessageFunction;
-  late ContractFunction getMessagesFunction;
 
   MessageStorageService({
     required this.client,
@@ -15,17 +15,16 @@ class MessageStorageService {
     required this.credentials,
   }) {
     sendMessageFunction = contract.function('sendMessage');
-    getMessagesFunction = contract.function("getMessages");
   }
 
   Future<void> sendMessage(String toAddress, String cid) async {
     final EthereumAddress to = EthereumAddress.fromHex(toAddress);
-    
+
     print("=== SENDING MESSAGE ===");
     print("From: $ownAddress");
     print("To: $to");
     print("CID: $cid");
-    
+
     await client.sendTransaction(
       credentials,
       Transaction.callContract(
@@ -38,56 +37,71 @@ class MessageStorageService {
     );
   }
 
-  Future<List<Map<String, dynamic>>> getMessages(EthereumAddress otherUser) async {
-    final userAddress = await credentials.extractAddress();
-    
-    print("=== FETCHING MESSAGES ===");
-    print("Your address: $userAddress");
-    print("Other user address: $otherUser");
-    print("Contract address: ${contract.address}");
-    
-    final result = await client.call(
-      contract: contract,
-      function: getMessagesFunction,
-      params: [otherUser],
-    );
-    
-    print("Raw result type: ${result.runtimeType}");
-    print("Raw result length: ${result.length}");
-    print("Raw getMessages result: $result");
-    
-    if (result.isEmpty) {
-      print("ERROR: No messages returned from smart contract");
-      return [];
+  Future<List<Map<String, dynamic>>> getMessagesFromLogs({
+    required EthereumAddress userA,
+    required EthereumAddress userB,
+  }) async {
+    final event = contract.event('MessageSent');
+    final topic0 = bytesToHex(event.signature, include0x: true);
+
+    String toTopicAddress(EthereumAddress address) {
+      return '0x' + address.hexNo0x.padLeft(64, '0');
     }
-    
-    final List<dynamic> messagesRaw = result[0] as List<dynamic>;
-    print("Messages array length: ${messagesRaw.length}");
-    
-    final List<Map<String, dynamic>> parsedMessages = [];
-    
-    for (int i = 0; i < messagesRaw.length; i++) {
-      final msg = messagesRaw[i];
-      print("Processing message $i: $msg");
-      
-      try {
-        final parsedMsg = {
-          "sender": msg[0] as EthereumAddress,
-          "receiver": msg[1] as EthereumAddress,
-          "cid": msg[2] as String,
-          "timestamp": msg[3] as BigInt,
-          "deleted": msg[4] as bool,
-        };
-         
-          parsedMessages.add(parsedMsg);
-        
-        
-      } catch (e) {
-        print("Error parsing message $i: $e");
+
+    final filter = FilterOptions(
+      fromBlock: BlockNum.genesis(),
+      toBlock: BlockNum.current(),
+      address: contract.address,
+      topics: [
+        [bytesToHex(event.signature, include0x: true)],
+        [
+          toTopicAddress(userA),
+          toTopicAddress(userB),
+        ],
+        [
+          toTopicAddress(userB),
+          toTopicAddress(userA),
+        ],
+      ],
+    );
+
+    final logs = await client.getLogs(filter);
+    print("🔍 Logs fetched: ${logs.length}");
+
+    final List<Map<String, dynamic>> parsed = [];
+
+    for (var log in logs) {
+      print("🧾 Raw Log: ${log.topics}, ${log.data}");
+      final decoded = event.decodeResults(log.topics!, log.data!);
+      print(
+          "Decoded => sender: ${decoded[0]}, receiver: ${decoded[1]}, cid: ${decoded[2]}, timestamp: ${decoded[3]}");
+
+      final sender = decoded[0] as EthereumAddress;
+      final receiver = decoded[1] as EthereumAddress;
+      final cid = decoded[2] as String;
+      final timestamp = decoded[3] as BigInt;
+
+      print("📩 Message:");
+      print("  Sender: ${sender.hex}");
+      print("  Receiver: ${receiver.hex}");
+      print("  CID: $cid");
+      print("  Timestamp: $timestamp");
+
+      // include only messages between userA and userB
+      final isBetweenUsers = (sender == userA && receiver == userB) ||
+          (sender == userB && receiver == userA);
+
+      if (isBetweenUsers) {
+        parsed.add({
+          'sender': sender.hex,
+          'receiver': receiver.hex,
+          'cid': cid,
+          'timestamp': timestamp,
+          'deleted': false, // can't detect from logs
+        });
       }
     }
-    
-    print("Returning ${parsedMessages.length} parsed messages");
-    return parsedMessages;
+
+    return parsed;
   }
 }

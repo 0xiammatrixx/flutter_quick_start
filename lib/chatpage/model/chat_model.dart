@@ -1,8 +1,9 @@
 import 'package:arbichat/chatpage/model/message_model.dart';
+import 'package:arbichat/chatpage/model/minimal_message.dart';
 
 class ChatTiles {
   final UserProfile userProfile;
-  final ChatMessage message;
+  final Message message;
   final String avatarUrl;
   final DateTime timestamp;
   final bool isSentByUser;

@@ -1,4 +1,3 @@
-import 'package:arbichat/chatpage/page/message_page.dart';
 import 'package:flutter/material.dart';
 import 'package:arbichat/profilepage/model/profile_model.dart';
 
@@ -128,7 +127,6 @@ class ProfileWidget extends StatelessWidget {
               subtitle: const Text('Invite your friends and family here'),
               trailing: const Icon(Icons.file_upload_outlined),
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => MessageTestPage()));
               },
             ),
           )

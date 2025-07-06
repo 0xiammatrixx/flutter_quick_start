@@ -91,7 +91,7 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(5.0),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -109,7 +109,7 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
                     searchWalletAddress(address, context);
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Invalid Ethereum address")),
+                      const SnackBar(content: Text("Invalid Ethereum address",)),
                     );
                   }
                 },
@@ -121,7 +121,7 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
               ),
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 0),
         ],
       ),
     );
