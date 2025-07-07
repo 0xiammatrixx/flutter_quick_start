@@ -46,6 +46,7 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
               (docSnapshot.data()?['walletBalance'] as num?)?.toDouble() ?? 0.0,
           walletAddress: otherUserAddress,
           name: docSnapshot.data()?['name'] ?? 'Unknown',
+          avatarUrl: (docSnapshot.data()?['avatarUrl'] ?? 'assets/profileplaceholder.png')
         );
 
         final prefs = await SharedPreferences.getInstance();

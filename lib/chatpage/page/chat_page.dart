@@ -132,10 +132,12 @@ class _ChatsPageState extends State<ChatsPage> {
         userProfile = UserProfile.fromMap(userData);
       } else {
         userProfile = UserProfile(
+          avatarUrl: 'assets/profileplaceholder.png',
             walletAddress: otherWalletAddress,
             name: otherWalletAddress,
             interactionScore: 0,
             walletBalance: 0.0);
+            
       }
 
       final previewMessage = Message(

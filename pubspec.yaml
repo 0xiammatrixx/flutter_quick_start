@@ -51,6 +51,7 @@ dependencies:
   pointycastle: ^3.9.1
   convert: ^3.1.2
   minio: ^3.5.7
+  equatable: ^2.0.7
 
 dev_dependencies:
   flutter_test:
