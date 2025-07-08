@@ -22,6 +22,14 @@ class ProfileWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
+    ImageProvider avatarProvider;
+
+    if (profile.avatarUrl.startsWith('http')) {
+      avatarProvider = NetworkImage(profile.avatarUrl);
+    } else {
+      avatarProvider = AssetImage(profile.avatarUrl);
+    }
+
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -30,7 +38,7 @@ class ProfileWidget extends StatelessWidget {
             child: Stack(children: [
               Container(
                 child: CircleAvatar(
-                  backgroundImage: AssetImage(profile.avatarUrl),
+                  backgroundImage: avatarProvider,
                   radius: 70,
                 ),
               ),
@@ -69,9 +77,34 @@ class ProfileWidget extends StatelessWidget {
           ),
           const SizedBox(height: 5),
           if (isOwnProfile)
-            SizedBox(
-              width: screenWidth * 0.35,
+            Container(
+              width: screenWidth * 0.5,
+              decoration: BoxDecoration(boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  spreadRadius: 4,
+                  blurRadius: 6,
+                  offset: const Offset(0, 4),
+                ),
+              ], borderRadius: BorderRadius.circular(10)),
               child: ElevatedButton(
+                style: ButtonStyle(
+                  backgroundColor: WidgetStateProperty.resolveWith<Color>(
+                      (Set<WidgetState> states) {
+                    if (states.contains(
+                      WidgetState.pressed,
+                    )) {
+                      return Colors.grey;
+                    }
+                    return Colors.black;
+                  }),
+                  foregroundColor: WidgetStateProperty.all(
+                      const Color.fromARGB(255, 255, 255, 255)),
+                  shape: WidgetStateProperty.all(RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10))),
+                  textStyle: WidgetStateProperty.all(const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold)),
+                ),
                 onPressed: () async {
                   final result = await Navigator.push(
                       context,
@@ -82,7 +115,7 @@ class ProfileWidget extends StatelessWidget {
                               currentLocation: profile.location ?? '',
                               currentAvatarUrl: profile.avatarUrl)));
                   if (result == true) {
-                    Navigator.pop(context);
+                    Navigator.pop(context, true);
                   }
                 },
                 child: const Row(
@@ -100,7 +133,9 @@ class ProfileWidget extends StatelessWidget {
                 ),
               ),
             ),
-          const Divider(),
+          const SizedBox(
+            height: 20,
+          ),
           Card(
             child: ListTile(
               leading: const Icon(Icons.mail_outline_rounded),
@@ -114,7 +149,7 @@ class ProfileWidget extends StatelessWidget {
           ),
           Card(
             child: ListTile(
-              leading: const Icon(Icons.phone_enabled_outlined),
+              leading: const Icon(Icons.account_balance_wallet),
               title: const Text('Wallet Address'),
               subtitle: Text(
                 profile.walletAddress,
@@ -123,26 +158,17 @@ class ProfileWidget extends StatelessWidget {
               ),
             ),
           ),
-          FutureBuilder<String?>(
-            future: _getPrivateKey(),
-            builder: (context, snapshot) {
-              if (!snapshot.hasData) return const SizedBox();
-              final key = snapshot.data!;
-              final blurredKey =
-                  '${key.substring(0, 6)}••••••••••••${key.substring(key.length - 4)}';
-
-              return Card(
-                child: ListTile(
-                  leading: const Icon(Icons.lock_outline),
-                  title: const Text('Private Key'),
-                  subtitle: Text(
-                    blurredKey,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              );
-            },
-          ),
+          if (isOwnProfile)
+            FutureBuilder<String?>(
+              future: _getPrivateKey(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) return const SizedBox();
+                final key = snapshot.data!;
+                return PrivateKeyDisplay(
+                  privateKey: key,
+                );
+              },
+            ),
           profile.location != null
               ? Card(
                   child: ListTile(
@@ -164,19 +190,63 @@ class ProfileWidget extends StatelessWidget {
           const SizedBox(
             height: 20,
           ),
-          Card(
-            child: ListTile(
-              leading: const Icon(Icons.share),
-              title: const Text(
-                'Share your profile',
-                style: TextStyle(fontWeight: FontWeight.bold),
+          if (isOwnProfile)
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.share),
+                title: const Text(
+                  'Share your profile',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                subtitle: const Text('Invite your friends and family here'),
+                trailing: const Icon(Icons.file_upload_outlined),
+                onTap: () {},
               ),
-              subtitle: const Text('Invite your friends and family here'),
-              trailing: const Icon(Icons.file_upload_outlined),
-              onTap: () {},
-            ),
-          )
+            )
         ],
+      ),
+    );
+  }
+}
+
+class PrivateKeyDisplay extends StatefulWidget {
+  final String privateKey;
+  const PrivateKeyDisplay({super.key, required this.privateKey});
+
+  @override
+  State<PrivateKeyDisplay> createState() => _PrivateKeyDisplayState();
+}
+
+class _PrivateKeyDisplayState extends State<PrivateKeyDisplay> {
+  bool _obscured = true;
+
+  @override
+  Widget build(BuildContext context) {
+    final key = widget.privateKey;
+    // Mask all except first 6 and last 4 chars if obscured
+    final displayKey = _obscured
+        ? '${key.substring(0, 6)}••••••••••••${key.substring(key.length - 4)}'
+        : key;
+
+    return Card(
+      child: ListTile(
+        leading: const Icon(Icons.lock_outline),
+        title: const Text('Private Key'),
+        subtitle: Text(
+          displayKey,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.5,
+            fontFamily: 'monospace',
+          ),
+        ),
+        trailing: InkWell(
+            onTap: () {
+              setState(() {
+                _obscured = !_obscured;
+              });
+            },
+            child: Icon(_obscured ? Icons.visibility : Icons.visibility_off)),
       ),
     );
   }

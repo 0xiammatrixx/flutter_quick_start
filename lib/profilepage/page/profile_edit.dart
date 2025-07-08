@@ -1,8 +1,12 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:mime/mime.dart';
 
 class EditProfilePage extends StatefulWidget {
   final String walletAddress;
@@ -47,14 +51,32 @@ class _EditProfilePageState extends State<EditProfilePage> {
     }
   }
 
-  Future<String?> _uploadImage(File imageFile) async {
-    final ref = FirebaseStorage.instance
-        .ref()
-        .child('profile_pictures')
-        .child('${widget.walletAddress}.jpg');
+  Future<String?> uploadToCloudinaryUnsigned(File imageFile) async {
+    const cloudName = 'dk1f7eolo'; // replace with yours
+    const uploadPreset = 'ArbiChat';
 
-    await ref.putFile(imageFile);
-    return await ref.getDownloadURL();
+    final url =
+        Uri.parse('https://api.cloudinary.com/v1_1/$cloudName/image/upload');
+
+    final mimeType = lookupMimeType(imageFile.path);
+    final request = http.MultipartRequest('POST', url)
+      ..fields['upload_preset'] = uploadPreset
+      ..files.add(await http.MultipartFile.fromPath(
+        'file',
+        imageFile.path,
+        contentType: mimeType != null ? MediaType.parse(mimeType) : null,
+      ));
+
+    final response = await request.send();
+
+    if (response.statusCode == 200) {
+      final res = await http.Response.fromStream(response);
+      final data = jsonDecode(res.body);
+      return data['secure_url'];
+    } else {
+      print('Cloudinary upload failed: ${response.statusCode}');
+      return null;
+    }
   }
 
   Future<void> _saveProfile() async {
@@ -68,17 +90,27 @@ class _EditProfilePageState extends State<EditProfilePage> {
     String? avatarUrl = widget.currentAvatarUrl;
 
     if (_imageFile != null) {
-      avatarUrl = await _uploadImage(_imageFile!);
+      avatarUrl = await uploadToCloudinaryUnsigned(_imageFile!);
     }
 
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(widget.walletAddress)
-        .update({
-      'name': name,
-      'location': location,
-      'avatarUrl': avatarUrl,
-    });
+    if (avatarUrl != null) {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.walletAddress)
+          .update({
+        'name': name,
+        'location': location,
+        'avatarUrl': avatarUrl,
+      });
+    } else {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.walletAddress)
+          .update({
+        'name': name,
+        'location': location,
+      });
+    }
 
     setState(() => _isSaving = false);
 
@@ -89,7 +121,18 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    var bgcol = const Color.fromARGB(255, 235, 235, 235).withOpacity(1);
+    ImageProvider avatarProvider;
+
+    if (_imageFile != null) {
+      avatarProvider = FileImage(_imageFile!);
+    } else if (widget.currentAvatarUrl.startsWith('http')) {
+      avatarProvider = NetworkImage(widget.currentAvatarUrl);
+    } else {
+      avatarProvider = const AssetImage('assets/profileplaceholder.png');
+    }
     return Scaffold(
+      backgroundColor: bgcol,
       appBar: AppBar(
           title: const Text(
         'Edit Profile',
@@ -107,12 +150,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       onTap: _pickImage,
                       child: CircleAvatar(
                         radius: 60,
-                        backgroundImage: _imageFile != null
-                            ? FileImage(_imageFile!)
-                            : (widget.currentAvatarUrl.startsWith('http')
-                                ? NetworkImage(widget.currentAvatarUrl)
-                                : const AssetImage('assets/profileplaceholder.png')
-                                    as ImageProvider),
+                        backgroundImage: avatarProvider,
                         child: const Align(
                           alignment: Alignment.bottomRight,
                           child: Icon(Icons.camera_alt, color: Colors.white),
@@ -134,6 +172,23 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     ),
                     const SizedBox(height: 20),
                     ElevatedButton(
+                      style: ButtonStyle(
+                        backgroundColor: WidgetStateProperty.resolveWith<Color>(
+                            (Set<WidgetState> states) {
+                          if (states.contains(
+                            WidgetState.pressed,
+                          )) {
+                            return Colors.grey;
+                          }
+                          return Colors.black;
+                        }),
+                        foregroundColor: WidgetStateProperty.all(
+                            const Color.fromARGB(255, 255, 255, 255)),
+                        shape: WidgetStateProperty.all(RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10))),
+                        textStyle: WidgetStateProperty.all(const TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold)),
+                      ),
                       onPressed: _saveProfile,
                       child: const Text('Save Changes'),
                     ),

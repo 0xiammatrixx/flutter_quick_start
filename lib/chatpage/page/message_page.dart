@@ -48,17 +48,16 @@ class _MessageTestPageState extends State<MessageTestPage> {
   }
 
   void _scrollToBottomAnimated() {
-  if (_scrollController.hasClients) {
-    _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
-  } else {
-    // Not attached yet, try again next frame
-    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottomAnimated());
+    if (_scrollController.hasClients) {
+      _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+    } else {
+      // Not attached yet, try again next frame
+      WidgetsBinding.instance
+          .addPostFrameCallback((_) => _scrollToBottomAnimated());
+    }
   }
-}
-
 
   Future<void> setup() async {
-    
     final prefs = await SharedPreferences.getInstance();
     final privateKey = prefs.getString('privateKey') ?? '0';
 
@@ -72,7 +71,8 @@ class _MessageTestPageState extends State<MessageTestPage> {
     credentials = EthPrivateKey.fromHex(privateKey);
     ownAddress = await credentials.extractAddress();
 
-    final messageBox = await Hive.openBox<ChatMessage>('chat_messages_$ownAddress');
+    final messageBox =
+        await Hive.openBox<ChatMessage>('chat_messages_$ownAddress');
 
     messageStorageService = MessageStorageService(
       client: client,
@@ -295,7 +295,10 @@ class _MessageTestPageState extends State<MessageTestPage> {
                     children: _buildMessageList(),
                   ),
           ),
-          const Divider(height: 1, color: Colors.white,),
+          const Divider(
+            height: 1,
+            color: Colors.white,
+          ),
           _buildInputArea(),
         ],
       ),

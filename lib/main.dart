@@ -18,6 +18,8 @@ import 'package:web3auth_flutter/output.dart';
 import 'package:web3auth_flutter/web3auth_flutter.dart';
 import 'package:web3dart/web3dart.dart' as web3dart;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cloudinary_url_gen/cloudinary.dart';
+import 'package:cloudinary_flutter/cloudinary_context.dart';
 
 import 'package:arbichat/chatpage/page/chat_page.dart';
 
@@ -32,6 +34,9 @@ void main() async {
   await Hive.initFlutter();
 
   Hive.registerAdapter(ChatMessageAdapter());
+
+  CloudinaryContext.cloudinary =
+      Cloudinary.fromCloudName(cloudName: 'dk1f7eolo');
 
   runApp(const MyApp());
 }

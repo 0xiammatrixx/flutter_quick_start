@@ -62,17 +62,29 @@ class _ChatsPageState extends State<ChatsPage> {
     userWalletAddress = ownAddress.hex.toLowerCase();
     print("Current wallet address: $userWalletAddress");
 
-    final previewBox = await Hive.openBox<ChatMessage>('chat_previews_$userWalletAddress');
+    final previewBox =
+        await Hive.openBox<ChatMessage>('chat_previews_$userWalletAddress');
     if (previewBox.isNotEmpty) {
       List<ChatTiles> cachedChats = [];
 
       for (final msg in previewBox.values) {
+        final snapshot =
+            await _firestore.collection('users').doc(msg.senderHex).get();
+        String avatarUrl = 'assets/profileplaceholder.png';
+        String name = msg.senderHex;
+
+        if (snapshot.exists) {
+          final data = snapshot.data()!;
+          avatarUrl = data['avatarUrl'] ?? avatarUrl;
+          name = data['name'] ?? name;
+        }
+
         final profile = UserProfile(
           walletAddress: msg.senderHex,
-          name: msg.senderHex,
+          name: name,
           walletBalance: 0.0,
           interactionScore: 0,
-          avatarUrl: 'assets/profileplaceholder.png',
+          avatarUrl: avatarUrl,
         );
 
         final preview = Message(
@@ -313,12 +325,14 @@ class _ChatsPageState extends State<ChatsPage> {
         actions: <Widget>[
           IconButton(
               onPressed: () {
-                if(userWalletAddress == null) return;
+                if (userWalletAddress == null) return;
                 final ethAddress = EthereumAddress.fromHex(userWalletAddress!);
                 Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) => ProfilePage(walletAddress: ethAddress.hexEip55, isOwnProfile: true)));
+                        builder: (context) => ProfilePage(
+                            walletAddress: ethAddress.hexEip55,
+                            isOwnProfile: true)));
               },
               icon: const Icon(Icons.person))
         ],
