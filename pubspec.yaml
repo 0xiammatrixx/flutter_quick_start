@@ -52,6 +52,12 @@ dependencies:
   convert: ^3.1.2
   minio: ^3.5.7
   equatable: ^2.0.7
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  path_provider: ^2.1.5
+  hive_generator: ^2.0.1
+  build_runner: ^2.5.4
+  sticky_grouped_list: ^3.1.0
 
 dev_dependencies:
   flutter_test:

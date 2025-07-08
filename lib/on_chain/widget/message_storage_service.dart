@@ -20,11 +20,6 @@ class MessageStorageService {
   Future<void> sendMessage(String toAddress, String cid) async {
     final EthereumAddress to = EthereumAddress.fromHex(toAddress);
 
-    print("=== SENDING MESSAGE ===");
-    print("From: $ownAddress");
-    print("To: $to");
-    print("CID: $cid");
-
     await client.sendTransaction(
       credentials,
       Transaction.callContract(
@@ -66,26 +61,17 @@ class MessageStorageService {
     );
 
     final logs = await client.getLogs(filter);
-    print("🔍 Logs fetched: ${logs.length}");
+ 
 
     final List<Map<String, dynamic>> parsed = [];
 
     for (var log in logs) {
-      print("🧾 Raw Log: ${log.topics}, ${log.data}");
       final decoded = event.decodeResults(log.topics!, log.data!);
-      print(
-          "Decoded => sender: ${decoded[0]}, receiver: ${decoded[1]}, cid: ${decoded[2]}, timestamp: ${decoded[3]}");
 
       final sender = decoded[0] as EthereumAddress;
       final receiver = decoded[1] as EthereumAddress;
       final cid = decoded[2] as String;
       final timestamp = decoded[3] as BigInt;
-
-      print("📩 Message:");
-      print("  Sender: ${sender.hex}");
-      print("  Receiver: ${receiver.hex}");
-      print("  CID: $cid");
-      print("  Timestamp: $timestamp");
 
       // include only messages between userA and userB
       final isBetweenUsers = (sender == userA && receiver == userB) ||

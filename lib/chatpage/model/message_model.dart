@@ -1,5 +1,7 @@
-import 'package:equatable/equatable.dart';
 import 'package:web3dart/web3dart.dart';
+import 'package:hive/hive.dart';
+
+part 'message_model.g.dart';
 
 class UserProfile {
   final String walletAddress;
@@ -18,71 +20,129 @@ class UserProfile {
     required this.avatarUrl,
   });
 
-
   Map<String, dynamic> toMap() {
     return {
       'walletAddress': walletAddress,
       'name': name,
       'walletBalance': walletBalance,
-      'interactionScore': interactionScore
+      'interactionScore': interactionScore,
+      'avatarUrl': avatarUrl,
     };
   }
 
   static UserProfile fromMap(Map<String, dynamic> map) {
     return UserProfile(
-      walletAddress: map['walletAddress'] ?? 'Unknown Address', 
-      name: map['name'] ?? 'Unknown User',                     
-      walletBalance: (map['walletBalance'] as num?)?.toDouble() ?? 0.0, 
+      walletAddress: map['walletAddress'] ?? 'Unknown Address',
+      name: map['name'] ?? 'Unknown User',
+      walletBalance: (map['walletBalance'] as num?)?.toDouble() ?? 0.0,
       interactionScore: map['interactionScore'] ?? 0,
-      avatarUrl: map['avatarUrl'] ?? 'assets/profileplaceholder.png',          
+      avatarUrl: map['avatarUrl'] ?? 'assets/profileplaceholder.png',
     );
   }
 }
 
-class ChatMessage extends Equatable {
-  final EthereumAddress sender;
-  final EthereumAddress receiver;
-  final String cid;
-  final BigInt timestamp;
-  final bool deleted;
-  final String? plaintext; 
+@HiveType(typeId: 0)
+class ChatMessage extends HiveObject {
+  @HiveField(0)
+  final String senderHex;
 
+  @HiveField(1)
+  final String receiverHex;
+
+  @HiveField(2)
+  final String cid;
+
+  @HiveField(3)
+  final int timestamp; // stored as int for Hive
+
+  @HiveField(4)
+  final bool deleted;
+
+  @HiveField(5)
+  final String? plaintext;
+
+  // ✅ This constructor is now Hive-compatible
   ChatMessage({
-    required this.sender,
-    required this.receiver,
+    required this.senderHex,
+    required this.receiverHex,
     required this.cid,
     required this.timestamp,
     required this.deleted,
     this.plaintext,
   });
 
-  factory ChatMessage.fromMap(Map<String, dynamic> map) {
+  // 🧠 Helper getters for developer ergonomics
+  EthereumAddress get sender => EthereumAddress.fromHex(senderHex);
+  EthereumAddress get receiver => EthereumAddress.fromHex(receiverHex);
+  BigInt get timestampBigInt => BigInt.from(timestamp);
+
+  // Optional: factory to construct from real types
+  factory ChatMessage.fromTypes({
+    required EthereumAddress sender,
+    required EthereumAddress receiver,
+    required String cid,
+    required BigInt timestamp,
+    required bool deleted,
+    String? plaintext,
+  }) {
     return ChatMessage(
-      sender: EthereumAddress.fromHex(map['sender']),
-      receiver: EthereumAddress.fromHex(map['receiver']),
+      senderHex: sender.hex,
+      receiverHex: receiver.hex,
+      cid: cid,
+      timestamp: timestamp.toInt(),
+      deleted: deleted,
+      plaintext: plaintext,
+    );
+  }
+
+  Map<String, dynamic> toMap() => {
+    'sender': senderHex,
+    'receiver': receiverHex,
+    'cid': cid,
+    'timestamp': timestamp,
+    'deleted': deleted,
+    'plaintext': plaintext,
+  };
+
+  factory ChatMessage.fromMap(Map<String, dynamic> map) {
+    int timestampInt;
+
+  final ts = map['timestamp'];
+  if (ts is BigInt) {
+    timestampInt = ts.toInt();
+  } else if (ts is int) {
+    timestampInt = ts;
+  } else if (ts is String) {
+    timestampInt = int.parse(ts);
+  } else {
+    throw Exception('Invalid timestamp type: ${ts.runtimeType}');
+  }
+
+    return ChatMessage(
+      senderHex: map['sender'],
+      receiverHex: map['receiver'],
       cid: map['cid'],
-      timestamp: BigInt.parse(map['timestamp'].toString()),
+      timestamp: timestampInt,
       deleted: map['deleted'],
+      plaintext: map['plaintext'],
     );
   }
 
   ChatMessage copyWith({
-    EthereumAddress? sender,
-    EthereumAddress? receiver,
+    String? senderHex,
+    String? receiverHex,
     String? cid,
-    BigInt? timestamp,
+    int? timestamp,
     bool? deleted,
     String? plaintext,
   }) {
     return ChatMessage(
-      sender: sender ?? this.sender,
-      receiver: receiver ?? this.receiver,
+      senderHex: senderHex ?? this.senderHex,
+      receiverHex: receiverHex ?? this.receiverHex,
       cid: cid ?? this.cid,
       timestamp: timestamp ?? this.timestamp,
       deleted: deleted ?? this.deleted,
       plaintext: plaintext ?? this.plaintext,
     );
   }
-  @override
-  List<Object?> get props => [sender, receiver, timestamp];
 }

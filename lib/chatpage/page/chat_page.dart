@@ -10,6 +10,7 @@ import 'package:arbichat/chatpage/widgets/chat_widget.dart';
 import 'package:arbichat/chatpage/widgets/search_bar.dart';
 import 'package:arbichat/profilepage/page/profile_page.dart';
 import 'package:flutter/services.dart';
+import 'package:hive/hive.dart';
 import 'package:http/http.dart';
 import 'message_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -60,6 +61,42 @@ class _ChatsPageState extends State<ChatsPage> {
     userWalletAddress = ownAddress.hex.toLowerCase();
     print("Current wallet address: $userWalletAddress");
 
+    final previewBox = await Hive.openBox<ChatMessage>('chat_previews');
+    if (previewBox.isNotEmpty) {
+      List<ChatTiles> cachedChats = [];
+
+      for (final msg in previewBox.values) {
+        final profile = UserProfile(
+          walletAddress: msg.senderHex,
+          name: msg.senderHex,
+          walletBalance: 0.0,
+          interactionScore: 0,
+          avatarUrl: 'assets/profileplaceholder.png',
+        );
+
+        final preview = Message(
+          senderAddress: msg.senderHex,
+          messageContent: msg.plaintext ?? '[No content]',
+          timestamp:
+              DateTime.fromMillisecondsSinceEpoch(msg.timestamp.toInt() * 1000),
+          isSentByUser: msg.senderHex == userWalletAddress,
+        );
+
+        cachedChats.add(ChatTiles(
+          userProfile: profile,
+          message: preview,
+          avatarUrl: profile.avatarUrl,
+          timestamp: preview.timestamp,
+          isSentByUser: preview.isSentByUser,
+        ));
+      }
+
+      setState(() {
+        chats = cachedChats;
+        loading = false;
+      });
+    }
+
     // Initialize client
     final client = web3dart.Web3Client(
       'https://sepolia-rollup.arbitrum.io/rpc',
@@ -81,86 +118,116 @@ class _ChatsPageState extends State<ChatsPage> {
       ownAddress: ownAddress,
       credentials: credentials,
     );
+    try {
+      List<ChatTiles> tempChats = [];
 
-    List<ChatTiles> tempChats = [];
+      final firebaseUsers = await _firestore.collection('users').get();
+      print("Fetched ${firebaseUsers.docs.length} Firebase users");
 
-    final firebaseUsers = await _firestore.collection('users').get();
-    print("Fetched ${firebaseUsers.docs.length} Firebase users");
+      for (var doc in firebaseUsers.docs) {
+        String otherWalletAddress = doc.id.toLowerCase();
 
-    for (var doc in firebaseUsers.docs) {
-      String otherWalletAddress = doc.id.toLowerCase();
+        if (otherWalletAddress == userWalletAddress) continue;
 
-      if (otherWalletAddress == userWalletAddress) continue;
+        // Fetch on-chain messages
+        final otherAddress =
+            web3dart.EthereumAddress.fromHex(otherWalletAddress.toLowerCase());
 
-      // Fetch on-chain messages
-      final otherAddress =
-          web3dart.EthereumAddress.fromHex(otherWalletAddress.toLowerCase());
+        List<ChatMessage> messages = [];
 
-      List<ChatMessage> messages = [];
+        try {
+          final fetchedRaw = await messageStorageService.getMessagesFromLogs(
+            userA: ownAddress,
+            userB: otherAddress,
+          );
 
-      try {
-        final fetchedRaw = await messageStorageService.getMessagesFromLogs(
-        userA: ownAddress,
-        userB: otherAddress,
-      );
+          final fetchedMessages =
+              fetchedRaw.map((msgMap) => ChatMessage.fromMap(msgMap)).toList();
+          messages = fetchedMessages;
+        } catch (e) {
+          print(
+              "Failed to fetch messages from logs for $otherWalletAddress: $e");
+          continue;
+        }
 
-      final fetchedMessages = fetchedRaw.map((msgMap) => ChatMessage.fromMap(msgMap)).toList();
-        messages = fetchedMessages;
-      } catch (e) {
-        print("Failed to fetch messages from logs for $otherWalletAddress: $e");
-        continue;
+        if (messages.isEmpty) continue;
+
+        messages.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+        final lastMessage = messages.first;
+
+        // Decrypt message from IPFS
+        final encryptedContent =
+            await ipfsService.fetchFromIPFS(lastMessage.cid);
+        final decryptedMessage = SimpleEncryptor.decrypt(encryptedContent);
+
+        // Get profile info (avatar etc.)
+        final userProfileSnapshot =
+            await _firestore.collection('users').doc(otherWalletAddress).get();
+        String avatarUrl = 'assets/profileplaceholder.png';
+        UserProfile userProfile;
+
+        if (userProfileSnapshot.exists) {
+          final userData = userProfileSnapshot.data()!;
+          avatarUrl = userData['avatarUrl'] ?? avatarUrl;
+          userProfile = UserProfile.fromMap(userData);
+        } else {
+          userProfile = UserProfile(
+              avatarUrl: 'assets/profileplaceholder.png',
+              walletAddress: otherWalletAddress,
+              name: otherWalletAddress,
+              interactionScore: 0,
+              walletBalance: 0.0);
+        }
+
+        final previewMessage = Message(
+          senderAddress: lastMessage.sender.hexEip55,
+          messageContent: decryptedMessage,
+          timestamp: DateTime.fromMillisecondsSinceEpoch(
+              lastMessage.timestamp.toInt() * 1000),
+          isSentByUser:
+              lastMessage.sender.hex.toLowerCase() == userWalletAddress,
+        );
+
+        tempChats.add(ChatTiles(
+          userProfile: userProfile,
+          message: previewMessage,
+          avatarUrl: avatarUrl,
+          timestamp: previewMessage.timestamp,
+          isSentByUser: previewMessage.isSentByUser,
+        ));
       }
 
-      if (messages.isEmpty) continue;
+      if (tempChats.isNotEmpty) {
+        if (!mounted) return;
+        setState(() {
+          chats = tempChats;
+        });
 
-      messages.sort((a, b) => b.timestamp.compareTo(a.timestamp));
-      final lastMessage = messages.first;
+        await previewBox.clear(); // optional: or just update specific ones
 
-      // Decrypt message from IPFS
-      final encryptedContent = await ipfsService.fetchFromIPFS(lastMessage.cid);
-      final decryptedMessage = SimpleEncryptor.decrypt(encryptedContent);
-
-      // Get profile info (avatar etc.)
-      final userProfileSnapshot =
-          await _firestore.collection('users').doc(otherWalletAddress).get();
-      String avatarUrl = 'assets/profileplaceholder.png';
-      UserProfile userProfile;
-
-      if (userProfileSnapshot.exists) {
-        final userData = userProfileSnapshot.data()!;
-        avatarUrl = userData['avatarUrl'] ?? avatarUrl;
-        userProfile = UserProfile.fromMap(userData);
-      } else {
-        userProfile = UserProfile(
-          avatarUrl: 'assets/profileplaceholder.png',
-            walletAddress: otherWalletAddress,
-            name: otherWalletAddress,
-            interactionScore: 0,
-            walletBalance: 0.0);
-            
+        for (final chat in tempChats) {
+          await previewBox.put(
+              chat.userProfile.walletAddress,
+              ChatMessage.fromTypes(
+                sender: web3dart.EthereumAddress.fromHex(
+                    chat.userProfile.walletAddress),
+                receiver: web3dart.EthereumAddress.fromHex(userWalletAddress!),
+                cid: '__preview__',
+                timestamp:
+                    BigInt.from(chat.timestamp.millisecondsSinceEpoch ~/ 1000),
+                deleted: false,
+                plaintext: chat.message.messageContent,
+              ));
+        }
       }
-
-      final previewMessage = Message(
-        senderAddress: lastMessage.sender.hexEip55,
-        messageContent: decryptedMessage,
-        timestamp: DateTime.fromMillisecondsSinceEpoch(
-            lastMessage.timestamp.toInt() * 1000),
-        isSentByUser: lastMessage.sender.hex.toLowerCase() == userWalletAddress,
-      );
-
-      tempChats.add(ChatTiles(
-        userProfile: userProfile,
-        message: previewMessage,
-        avatarUrl: avatarUrl,
-        timestamp: previewMessage.timestamp,
-        isSentByUser: previewMessage.isSentByUser,
-      ));
+    } catch (e) {
+      print("Error during online sync: $e");
+      if (mounted) {
+        setState(() {
+          loading = false;
+        });
+      }
     }
-
-    setState(() {
-      chats = tempChats;
-      loading = false;
-    });
   }
 
   void addNewChat(UserProfile userProfile, ChatMessage message) async {
@@ -185,7 +252,7 @@ class _ChatsPageState extends State<ChatsPage> {
       );
     } else {
       // Try to fetch avatar from Firestore as fallback
-      String avatarUrl = 'assets/profileplaceholder.png'; // default
+      String avatarUrl = 'assets/profileplaceholder.png';
       final userProfileSnapshot = await _firestore
           .collection('users')
           .doc(userProfile.walletAddress)

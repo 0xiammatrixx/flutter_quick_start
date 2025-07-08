@@ -2,9 +2,12 @@ import 'dart:async';
 import 'dart:developer';
 import 'dart:io';
 
+import 'package:arbichat/chatpage/model/message_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
 import 'package:arbichat/chatpage/transaction/get_balance.dart';
 import 'package:arbichat/firebase_options.dart';
@@ -25,6 +28,13 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  await Hive.initFlutter();
+
+  Hive.registerAdapter(ChatMessageAdapter());
+
+  await Hive.openBox<ChatMessage>('chat_messages');
+
   runApp(const MyApp());
 }
 

@@ -55,7 +55,7 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
         final userWalletAddress = await credentials.extractAddress();
 
         // Create a message for the chat
-        ChatMessage message = ChatMessage(
+        ChatMessage message = ChatMessage.fromTypes(
           sender: userWalletAddress, // You'll need this
           receiver: EthereumAddress.fromHex(otherUserAddress),
           cid: '',

@@ -1,17 +1,28 @@
 import 'dart:ui';
 
+import 'package:arbichat/chatpage/transaction/wallet_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class ChatBubble extends StatelessWidget {
   final bool isMe;
   final String message;
+  final DateTime timestamp;
 
   const ChatBubble({
     super.key,
     required this.isMe,
     required this.message,
+    required this.timestamp,
   });
+
+  String get formattedTime {
+    final hour = timestamp.hour;
+    final minute = timestamp.minute.toString().padLeft(2, '0');
+    final ampm = hour >= 12 ? 'PM' : 'AM';
+    final formattedHour = hour % 12 == 0 ? 12 : hour % 12;
+    return '$formattedHour:$minute $ampm';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,18 +45,36 @@ class ChatBubble extends StatelessWidget {
                 isMe ? const Radius.circular(0) : const Radius.circular(16),
           ),
         ),
-        child: Text(
-          message,
-          style: TextStyle(fontSize: 16, color: isMe ? Colors.white : Colors.black ), 
-          softWrap: true,
-          overflow: TextOverflow.visible,
-          maxLines: null,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Flexible(
+              child: Text(
+                message,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: isMe ? Colors.white : Colors.black,
+                ),
+                softWrap: true,
+                overflow: TextOverflow.visible,
+                maxLines: null,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              formattedTime,
+              style: TextStyle(
+                fontSize: 10,
+                color: isMe ? Colors.white : Colors.black54,
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
-
 
 class DateSeparator extends StatelessWidget {
   final DateTime date;
@@ -71,7 +100,9 @@ class DateSeparator extends StatelessWidget {
   }
 }
 
-PreferredSizeWidget buildChatAppBar(String name, String avatarUrl) {
+
+
+PreferredSizeWidget buildChatAppBar(String address, String avatarUrl) {
   return AppBar(
     backgroundColor: Colors.white,
     foregroundColor: Colors.black,
@@ -83,11 +114,7 @@ PreferredSizeWidget buildChatAppBar(String name, String avatarUrl) {
           backgroundImage: AssetImage(avatarUrl),
         ),
         const SizedBox(width: 10),
-        Flexible(
-            child: Text(name,
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
-                style: const TextStyle(fontWeight: FontWeight.w700))),
+        Expanded(child: walletAddressPill(address)),
       ],
     ),
   );
