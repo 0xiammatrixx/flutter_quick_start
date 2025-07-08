@@ -3,10 +3,10 @@ import 'dart:developer';
 import 'dart:io';
 
 import 'package:arbichat/chatpage/model/message_model.dart';
+import 'package:arbichat/on_chain/widget/trust_calculator.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
 import 'package:arbichat/chatpage/transaction/get_balance.dart';
@@ -33,8 +33,6 @@ void main() async {
 
   Hive.registerAdapter(ChatMessageAdapter());
 
-  await Hive.openBox<ChatMessage>('chat_messages');
-
   runApp(const MyApp());
 }
 
@@ -51,12 +49,15 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   String rpcUrl = 'https://rpc.ankr.com/arbitrum_sepolia';
   // TextEditingController for handling input from the text field
   final TextEditingController emailController = TextEditingController();
+  double trustScorePercent = 0.0;
+  String trustRank = "Unranked";
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     initPlatformState();
+    loadTrustScore();
   }
 
   @override
@@ -73,7 +74,44 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     }
   }
 
-  // Platform messages are asynchronous, so we initialize in an async method.
+  Future<void> loadTrustScore() async {
+    final ownAddress = await _getAddress();
+    final score =
+        await TrustScoreService.calculateTrustScore(ownAddress);
+    final rank = _getRankFromScore(score.toDouble());
+
+    setState(() {
+      trustScorePercent = score / 100.0; // For CircularPercentIndicator
+      trustRank = rank;
+    });
+  }
+
+  String _getRankFromScore(double score) {
+  if (score >= 80) return "Vanguard";
+  if (score >= 60) return "Elite";
+  if (score >= 40) return "Trusted";
+  if (score >= 20) return "Contributor";
+  if (score >= 0) return "Newbie";
+  return "Unranked";
+}
+
+  String _getBadgeAsset(String rank) {
+    switch (rank) {
+      case "Newbie":
+        return "assets/rank1.gif";
+      case "Contributor":
+        return "assets/rank2.gif";
+      case "Trusted":
+        return "assets/rank3.gif";
+      case "Elite":
+        return "assets/rank4.gif";
+      case "Vanguard":
+        return "assets/rank5.gif";
+      default:
+        return "assets/rank1.gif";
+    }
+  }
+
   Future<void> initPlatformState() async {
     Uri redirectUrl;
     String clientId =
@@ -145,9 +183,10 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
                 actions: <Widget>[
                   IconButton(
                       padding: EdgeInsets.only(right: screenWidth * 0.05),
-                      onPressed: () {
+                      onPressed: () async {
+                        final walletAddress = await _getAddress();
                         navigatorKey.currentState?.push(MaterialPageRoute(
-                            builder: (context) => const ProfilePage()));
+                            builder: (context) => ProfilePage(walletAddress: walletAddress, isOwnProfile: true,)));
                       },
                       icon: const Icon(Icons.person))
                 ],
@@ -169,7 +208,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
                 child: Column(
                   children: [
                     Center(
-                      child: Container(
+                      child: SizedBox(
                           height: screenHeight * 0.08,
                           width: screenWidth * 0.6,
                           child: Image.asset('assets/ArbiChat_logo.png')),
@@ -283,14 +322,12 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
                               height: screenHeight * 0.03,
                               width: screenWidth * 0.8,
                             )),
-                            Positioned(
+                        Positioned(
                             bottom: 9,
                             left: screenWidth * 0.03,
                             child: Container(
                               decoration: BoxDecoration(
-                                
                                 border: Border.all(color: Colors.transparent),
-                                
                                 color: Colors.white,
                               ),
                               height: screenHeight * 0.03,
@@ -310,8 +347,9 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
                               child: CircularPercentIndicator(
                                 radius: 60.0,
                                 lineWidth: 15.0,
-                                percent: 0.87,
-                                center: Text("87%"),
+                                percent: trustScorePercent.clamp(0.0, 1.0),
+                                center: Text(
+                                    "${(trustScorePercent * 100).toInt()}%"),
                                 progressColor:
                                     Color.fromARGB(255, 16, 185, 129),
                                 footer: Text("Trust Score",
@@ -335,9 +373,10 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
                                 SizedBox(
                                     height: screenHeight * 0.13,
                                     width: screenWidth * 0.43,
-                                    child: Image.asset('assets/rank1.gif')),
+                                    child:
+                                        Image.asset(_getBadgeAsset(trustRank))),
                                 Text(
-                                  'Vanguard',
+                                  trustRank,
                                   textAlign: TextAlign.center,
                                   style: TextStyle(fontWeight: FontWeight.bold),
                                 )
@@ -417,8 +456,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
                         width: screenWidth * 0.9,
                         decoration: BoxDecoration(boxShadow: [
                           BoxShadow(
-                            color:
-                                Colors.black.withOpacity(0.1),
+                            color: Colors.black.withOpacity(0.1),
                             spreadRadius: 4,
                             blurRadius: 6,
                             offset: const Offset(0, 4),

@@ -7,7 +7,13 @@ import 'package:web3dart/web3dart.dart';
 import 'dart:developer';
 
 class ProfilePage extends StatefulWidget {
-  const ProfilePage({super.key});
+  final String walletAddress;
+  final bool isOwnProfile;
+  const ProfilePage({
+    super.key,
+    required this.walletAddress,
+    required this.isOwnProfile,
+  });
 
   @override
   _ProfilePageState createState() => _ProfilePageState();
@@ -23,27 +29,14 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _initializeProfile() async {
-    final walletAddress = await _getAddress();
     setState(() {
-      _profileFuture = _fetchProfile(walletAddress);
+      _profileFuture = _fetchProfile(widget.walletAddress);
     });
   }
 
-  Future<String> _getAddress() async {
-    final prefs = await SharedPreferences.getInstance();
-    final privateKey = prefs.getString('privateKey') ?? '';
-    if (privateKey.isEmpty) {
-      throw Exception("Private key not found in SharedPreferences");
-    }
-
-    final credentials = EthPrivateKey.fromHex(privateKey);
-    final address = credentials.address;
-    log("Wallet Address: ${address.hexEip55}");
-    return address.hexEip55;
-  }
-
   Future<Profile> _fetchProfile(String walletAddress) async {
-    final userDoc = FirebaseFirestore.instance.collection('users').doc(walletAddress);
+    final userDoc =
+        FirebaseFirestore.instance.collection('users').doc(walletAddress);
     final docSnapshot = await userDoc.get();
 
     if (docSnapshot.exists) {
@@ -52,7 +45,7 @@ class _ProfilePageState extends State<ProfilePage> {
         avatarUrl: data['avatarUrl'] ?? 'assets/profileplaceholder.png',
         name: data['name'] ?? 'Unverified User',
         emailAddress: data['email'],
-        walletAddress: data['walletAddress'] ??  walletAddress,
+        walletAddress: data['walletAddress'] ?? walletAddress,
         isOnline: data['isOnline'] ?? false,
         isVerified: data['isVerified'] ?? false,
         location: data['location'],
@@ -85,7 +78,11 @@ class _ProfilePageState extends State<ProfilePage> {
             final profile = snapshot.data!;
             return Padding(
               padding: const EdgeInsets.all(20),
-              child: ProfileWidget(profile: profile),
+              child: ProfileWidget(
+                profile: profile,
+                walletAddress: widget.walletAddress,
+                isOwnProfile: widget.isOwnProfile,
+              ),
             );
           } else {
             return const Center(child: Text('No data found'));

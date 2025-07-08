@@ -1,8 +1,12 @@
 import 'dart:ui';
 
 import 'package:arbichat/chatpage/transaction/wallet_widget.dart';
+import 'package:arbichat/main.dart';
+import 'package:arbichat/profilepage/page/profile_page.dart';
+import 'package:arbichat/profilepage/widget/profile_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:web3dart/web3dart.dart';
 
 class ChatBubble extends StatelessWidget {
   final bool isMe;
@@ -101,7 +105,6 @@ class DateSeparator extends StatelessWidget {
 }
 
 
-
 PreferredSizeWidget buildChatAppBar(String address, String avatarUrl) {
   return AppBar(
     backgroundColor: Colors.white,
@@ -110,8 +113,17 @@ PreferredSizeWidget buildChatAppBar(String address, String avatarUrl) {
     titleSpacing: 0,
     title: Row(
       children: [
-        CircleAvatar(
-          backgroundImage: AssetImage(avatarUrl),
+        GestureDetector(
+          onTap: (){
+            final ethAddress = EthereumAddress.fromHex(address);
+            Navigator.push(navigatorKey.currentContext!, 
+            MaterialPageRoute(builder: (context) => ProfilePage(
+              walletAddress: ethAddress.hexEip55, isOwnProfile: false,
+            )));
+          },
+          child: CircleAvatar(
+            backgroundImage: AssetImage(avatarUrl),
+          ),
         ),
         const SizedBox(width: 10),
         Expanded(child: walletAddressPill(address)),

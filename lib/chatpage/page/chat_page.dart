@@ -12,6 +12,7 @@ import 'package:arbichat/profilepage/page/profile_page.dart';
 import 'package:flutter/services.dart';
 import 'package:hive/hive.dart';
 import 'package:http/http.dart';
+import 'package:web3dart/web3dart.dart';
 import 'message_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:web3dart/web3dart.dart' as web3dart;
@@ -61,7 +62,7 @@ class _ChatsPageState extends State<ChatsPage> {
     userWalletAddress = ownAddress.hex.toLowerCase();
     print("Current wallet address: $userWalletAddress");
 
-    final previewBox = await Hive.openBox<ChatMessage>('chat_previews');
+    final previewBox = await Hive.openBox<ChatMessage>('chat_previews_$userWalletAddress');
     if (previewBox.isNotEmpty) {
       List<ChatTiles> cachedChats = [];
 
@@ -312,10 +313,12 @@ class _ChatsPageState extends State<ChatsPage> {
         actions: <Widget>[
           IconButton(
               onPressed: () {
+                if(userWalletAddress == null) return;
+                final ethAddress = EthereumAddress.fromHex(userWalletAddress!);
                 Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) => const ProfilePage()));
+                        builder: (context) => ProfilePage(walletAddress: ethAddress.hexEip55, isOwnProfile: true)));
               },
               icon: const Icon(Icons.person))
         ],

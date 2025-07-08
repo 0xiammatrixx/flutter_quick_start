@@ -58,8 +58,7 @@ class _MessageTestPageState extends State<MessageTestPage> {
 
 
   Future<void> setup() async {
-    final messageBox = await Hive.openBox<ChatMessage>('chat_messages');
-
+    
     final prefs = await SharedPreferences.getInstance();
     final privateKey = prefs.getString('privateKey') ?? '0';
 
@@ -72,6 +71,8 @@ class _MessageTestPageState extends State<MessageTestPage> {
     );
     credentials = EthPrivateKey.fromHex(privateKey);
     ownAddress = await credentials.extractAddress();
+
+    final messageBox = await Hive.openBox<ChatMessage>('chat_messages_$ownAddress');
 
     messageStorageService = MessageStorageService(
       client: client,
@@ -140,7 +141,7 @@ class _MessageTestPageState extends State<MessageTestPage> {
   }
 
   Future<void> prefetchDecryptMessages(List<ChatMessage> msgs) async {
-    final messageBox = Hive.box<ChatMessage>('chat_messages');
+    final messageBox = Hive.box<ChatMessage>('chat_messages_$ownAddress');
 
     for (int i = 0; i < msgs.length; i++) {
       final msg = msgs[i];
@@ -204,7 +205,7 @@ class _MessageTestPageState extends State<MessageTestPage> {
       await messageStorageService.sendMessage(receiver.hex, cid);
 
       final updatedMsg = tempMsg.copyWith(cid: cid);
-      final messageBox = Hive.box<ChatMessage>('chat_messages');
+      final messageBox = Hive.box<ChatMessage>('chat_messages_$ownAddress');
       await messageBox.put(updatedMsg.cid, updatedMsg);
 
       if (!mounted) return;
@@ -232,7 +233,7 @@ class _MessageTestPageState extends State<MessageTestPage> {
       final fetchedMessages =
           fetchedRaw.map((msgMap) => ChatMessage.fromMap(msgMap)).toList();
 
-      final messageBox = Hive.box<ChatMessage>('chat_messages');
+      final messageBox = Hive.box<ChatMessage>('chat_messages_$ownAddress');
 
       for (final msg in fetchedMessages) {
         final existing = messageBox.get(msg.cid);
@@ -278,9 +279,7 @@ class _MessageTestPageState extends State<MessageTestPage> {
 
   @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
     var bgcol = const Color.fromARGB(255, 235, 235, 235).withOpacity(1);
-    var textcol = const Color.fromARGB(255, 17, 24, 39);
     return Scaffold(
       backgroundColor: bgcol,
       appBar: buildChatAppBar(
@@ -349,7 +348,7 @@ class _MessageTestPageState extends State<MessageTestPage> {
       }
       widgets.add(ChatBubble(
         isMe: isMe,
-        message: '...',
+        message: '[Loading...]',
         timestamp: msgDate,
       ));
     }
