@@ -26,8 +26,9 @@ if (flutterVersionName == null) {
 }
 
 android {
+    namespace "com.example.w3aflutter"
     // IMP START - Requirements Android
-    compileSdkVersion 34 //flutter.compileSdkVersion
+    compileSdkVersion 35 //flutter.compileSdkVersion
     // IMP END - Requirements Android
     ndkVersion flutter.ndkVersion
 
@@ -52,8 +53,8 @@ android {
         // You can update the following values to match your application needs.
         // For more information, see: https://docs.flutter.dev/deployment/android#reviewing-the-build-configuration.
         // IMP START - Requirements Android
-        minSdkVersion 33 //flutter.minSdkVersion
-        targetSdkVersion 33 //flutter.targetSdkVersion
+        minSdkVersion 28 //flutter.minSdkVersion
+        targetSdkVersion 35 //flutter.targetSdkVersion
         // IMP END - Requirements Android
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
