@@ -10,6 +10,7 @@ import 'package:arbichat/on_chain/widget/encrypt.dart';
 import 'package:arbichat/on_chain/widget/message_storage_service.dart';
 import 'package:arbichat/on_chain/widget/pinata_ipfs.dart';
 import 'package:web3dart/web3dart.dart';
+import 'package:arbichat/chatpage/transaction/tip_transaction.dart';
 
 class MessageTestPage extends StatefulWidget {
   final UserProfile userProfile;
@@ -38,6 +39,8 @@ class _MessageTestPageState extends State<MessageTestPage> {
 
   List<ChatMessage> messages = [];
 
+  
+
   @override
   void initState() {
     super.initState();
@@ -56,6 +59,8 @@ class _MessageTestPageState extends State<MessageTestPage> {
           .addPostFrameCallback((_) => _scrollToBottomAnimated());
     }
   }
+
+  
 
   Future<void> setup() async {
     final prefs = await SharedPreferences.getInstance();
@@ -276,8 +281,9 @@ class _MessageTestPageState extends State<MessageTestPage> {
       print("Fetch error: $e");
     }
   }
-
+  
   @override
+  
   Widget build(BuildContext context) {
     var bgcol = const Color.fromARGB(255, 235, 235, 235).withOpacity(1);
     return Scaffold(
@@ -359,6 +365,7 @@ class _MessageTestPageState extends State<MessageTestPage> {
   }
 
   Widget _buildInputArea() {
+    final receiverAddress = widget.userProfile.walletAddress;
     final screenHeight = MediaQuery.of(context).size.height;
     return Container(
       height: screenHeight * 0.1,
@@ -410,6 +417,49 @@ class _MessageTestPageState extends State<MessageTestPage> {
                 }
               },
             ),
+          ),
+          const SizedBox(width: 8,),
+          IconButton(
+            icon: const Icon(Icons.attach_money),
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  double tipAmount = 0.0;
+                  return AlertDialog(
+                    title: const Text('Send a Tip'),
+                    content: TextField(
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
+                      decoration:
+                          const InputDecoration(hintText: 'Enter amount in ETH'),
+                      onChanged: (value) {
+                        tipAmount = double.tryParse(value) ?? 0.0;
+                      },
+                    ),
+                    actions: [
+                      TextButton(
+                        child: const Text('Cancel'),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                      TextButton(
+                        child: const Text('Send Tip'),
+                        onPressed: () async {
+                          Navigator.of(context).pop();
+                          final recipientAddress = receiverAddress;
+                          await sendTip(
+                              tipAmount: tipAmount,
+                              recipientAddress: recipientAddress,
+                              context: context);
+                        },
+                      ),
+                    ],
+                  );
+                },
+              );
+            },
           ),
         ],
       ),

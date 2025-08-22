@@ -9,29 +9,13 @@ Future<void> sendTip({
   required String recipientAddress,
   required BuildContext context,
 }) async {
-  // Minimum tip amount in ETH
-  const double minTipAmount = 0.0001;
-
-  if (tipAmount < minTipAmount) {
-    // Show a Snackbar for invalid tip amounts
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Invalid tip amount: Must be at least $minTipAmount ETH'),
-        duration: Duration(seconds: 2),
-      ),
-    );
-    return;
-  }
-
-  // RPC URL for Arbitrum Sepolia testnet
-  const rpcUrl = 'https://rpc.ankr.com/arbitrum_sepolia';
-  const chainId = 421614; // Chain ID for Arbitrum Sepolia
+  const rpcUrl = 'https://arbitrum-sepolia-rpc.publicnode.com';
+  const chainId = 421614;
 
   // Initialize Web3 client
   final client = Web3Client(rpcUrl, Client());
 
   try {
-    // Retrieve private key from SharedPreferences
     final prefs = await SharedPreferences.getInstance();
     final privateKey = prefs.getString('privateKey');
 
@@ -39,22 +23,16 @@ Future<void> sendTip({
       throw Exception("Private key not found!");
     }
 
-    // Create credentials
     final credentials = EthPrivateKey.fromHex(privateKey);
 
-    // Derive sender address
     final senderAddress = credentials.address;
 
     // Convert ETH to Wei manually
     final tipInWei =
         BigInt.from((tipAmount * BigInt.from(10).pow(18).toDouble()).toInt());
 
-    // Convert BigInt to int (this will work only if tipInWei is within int range)
+    // Convert BigInt to int
     final tipInWeiInt = tipInWei.toInt();
-
-    if (tipInWei < BigInt.from(100000000000000)) {
-      throw Exception("Tip amount is too small (minimum is 0.0001 ETH)");
-    }
 
     final gasEstimate = await client.estimateGas(
       sender: senderAddress,
@@ -102,7 +80,7 @@ Future<void> sendTip({
   } catch (e) {
     print('Transaction failed: $e');
 
-    navigatorKey.currentState?.pop(); // Close loading dialog
+    navigatorKey.currentState?.pop();
     await showDialog(
       context: navigatorKey.currentContext!,
       builder: (BuildContext context) {
@@ -121,7 +99,6 @@ Future<void> sendTip({
       },
     );
   } finally {
-    // Dispose of the client to free resources
     client.dispose();
   }
 }

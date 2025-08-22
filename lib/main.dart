@@ -81,8 +81,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
   Future<void> loadTrustScore() async {
     final ownAddress = await _getAddress();
-    final score =
-        await TrustScoreService.calculateTrustScore(ownAddress);
+    final score = await TrustScoreService.calculateTrustScore(ownAddress);
     final rank = _getRankFromScore(score.toDouble());
 
     setState(() {
@@ -92,13 +91,13 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   }
 
   String _getRankFromScore(double score) {
-  if (score >= 80) return "Vanguard";
-  if (score >= 60) return "Elite";
-  if (score >= 40) return "Trusted";
-  if (score >= 20) return "Contributor";
-  if (score >= 0) return "Newbie";
-  return "Unranked";
-}
+    if (score >= 80) return "Vanguard";
+    if (score >= 60) return "Elite";
+    if (score >= 40) return "Trusted";
+    if (score >= 20) return "Contributor";
+    if (score >= 0) return "Newbie";
+    return "Unranked";
+  }
 
   String _getBadgeAsset(String rank) {
     switch (rank) {
@@ -137,11 +136,11 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       // 259200 to stay authenticated for 3 days.
       sessionTime: 259200,
     ));
-    try {
-      await Web3AuthFlutter.initialize();
-    } catch (e) {
-      print("Initialization Error: $e");
-    }
+    // try {
+    //   await Web3AuthFlutter.initialize();
+    // } catch (e) {
+    //   print("Initialization Error: $e");
+    // }
     final String res = await Web3AuthFlutter.getPrivKey();
     log(res);
     if (res.isNotEmpty) {
@@ -191,7 +190,10 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
                       onPressed: () async {
                         final walletAddress = await _getAddress();
                         navigatorKey.currentState?.push(MaterialPageRoute(
-                            builder: (context) => ProfilePage(walletAddress: walletAddress, isOwnProfile: true,)));
+                            builder: (context) => ProfilePage(
+                                  walletAddress: walletAddress,
+                                  isOwnProfile: true,
+                                )));
                       },
                       icon: const Icon(Icons.person))
                 ],
@@ -494,7 +496,10 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   VoidCallback _login(Future<Web3AuthResponse> Function() method) {
     return () async {
       try {
+        log('login started');
         final Web3AuthResponse response = await method();
+        log("Response: ${response.toJson()}");
+        log("Web3Auth response received: $response");
         Future<void> saveWalletAddress(String walletAddress) async {
           // Check if the wallet address already exists in Firestore
           final docRef =
@@ -518,14 +523,20 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         // Save the wallet address to Firestore
         await saveWalletAddress(walletAddress);
 
+        await Web3AuthFlutter.initialize();
+
         setState(() {
           _result = response.toString();
           logoutVisible = true;
         });
+        log("Login process completed successfully.");
       } on UserCancelledException {
-        log("User cancelled.");
+        log("User cancelled login.");
       } on UnKnownException {
         log("Unknown exception occurred");
+      } catch (e, stackTrace) {
+        log("Exception caught during login: $e");
+        log("Stack trace: $stackTrace");
       }
     };
   }
