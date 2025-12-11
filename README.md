@@ -31,13 +31,9 @@ ArbiChat combines decentralized identifiers, real-time messaging, and blockchain
 - **Crypto Tips Made Easy:**  
   - Users can send tips directly to another wallet address using the private key stored locally.  
 - **Transaction Security:**  
-  - Web3dart ensures secure and hassle-free transactions between verified users.  
-
-### There's honestly a whole lot that I have in mind to add, but because of the constraint of time, I have to submit this as is. Basic things like editing profile are not yet available.
-### The main idea that I love the most about this app that will set it apart is the **Optional Verification System**  
+  - Web3dart ensures secure and hassle-free transactions between verified users.
+  - 
 - **Trust Score:**  
-  - Users will be able to verify their identity by affirming the name associated with their wallet address. Verified identities increase the trust score, allowing for safer one-on-one interactions. So you can say you are Mr A, but until real users affirm that you are Mr A, you wont be verified to bear the name Mr A.
-- **This idea was Human Protocol-Inspired:**  
   - This feature encourages trust-based transactions and enhances user credibility within the app.
 
 ---
